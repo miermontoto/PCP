@@ -1,0 +1,10 @@
+all: cleanall LibBLAS.so
+
+cleanall: clean
+	@rm -f	LibBLAS.so
+
+clean:
+	@rm -f *.o core *~
+	
+LibBLAS.so: BLAS.c
+	icc -o LibBLAS.so -fPIC -shared BLAS.c -qmkl=parallel -w2 -DICC -lm

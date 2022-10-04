@@ -1,0 +1,24 @@
+all: cleanall LibBLAS.so
+
+cleanall: clean
+	@rm -f	LibBLAS.so
+
+clean:
+	@rm -f *.o core *~
+	
+LibBLAS.o: BLAS.c
+	gcc -c BLAS.c -o LibBLAS.o -fPIC
+
+# Versiones de openblas instaladas en el sistema, algunas son necesarias para Python (numpy) por dependencias
+# openblaso -> libopenblas para OMP
+# openblasp -> libopenblas con threads
+# openblas  -> libopenblas secuencial
+# openblaso64 -> libopenblas 64 bits para OMP
+# openblasp64 -> libopenblas 64 bits con threads
+# openblas64  -> libopenblas 64 bits secuencial
+#
+# Con python (numpy) solo se puede usar sin sufijo 64. La /opt/openblas compilada por nosotros
+# no lleva sufijo, pero es 64. Por eso no se debe usar
+
+LibBLAS.so: LibBLAS.o
+	g++ -shared -Wl,-soname,LibBLAS.so -o LibBLAS.so LibBLAS.o -lopenblaso -lm
