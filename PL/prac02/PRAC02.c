@@ -86,9 +86,14 @@ int main(int argc, char *argv[])
      /*                                                                              */
      /* EL ALUMNO DEBE INCORPORAR AQUI EL CODIGO PARA REALIZA EL PRODUCTO MATRIZ POR */
      /* VECTOR DE FORMA SECUENCIAL. AUNQUE SEA POCO EFICIENTE NO USE VARIABLES       */
-     /* AUXILIARES PARA ALMACENAR PARCIALES, TRABAJAR DIRECTAMENTE SOBRE VectXse      */
-     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXse                                   */
+     /* AUXILIARES PARA ALMACENAR PARCIALES, TRABAJAR DIRECTAMENTE SOBRE VectXse     */
+     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXse                                  */
      /* **************************************************************************** */
+      for (i = 0; i < m; i++) {
+         for (j = 0; j < n; j++) {
+            VectXse[i] += Matriz[i][j] * VectorV[j];
+         }
+      }
   timefin=Ctimer();  
   printf("\n\nTiempo FASE 1: Secuencial sin variables auxiliares %2.7E sec. Error %1.5E.\n", timefin-timeini, ErrorVector(VectXse, VectXcb, m));
 
@@ -103,8 +108,15 @@ int main(int argc, char *argv[])
      /*                                                                              */
      /* IGUAL QUE FASE 1 PERO USANDO VARIABLES AUXILIARES PARA ALMACENAR RESULTADOS  */
      /* PARCIALES / INTERMEDIOS                                                      */
-     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXse                                   */
+     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXse                                  */
      /* **************************************************************************** */
+      for(i = 0; i < m; i++) {
+         for(j = 0; j < n; j++) {
+            sumas += Matriz[i][j] * VectorV[j];
+         }
+         VectXse[i] = sumas;
+         sumas = 0;
+      }
   timefin=Ctimer();  
   printf("Tiempo FASE 2: Secuencial con variables auxiliares %2.7E sec. Error %1.5E.\n", timefin-timeini, ErrorVector(VectXse, VectXcb, m));
 
@@ -119,8 +131,15 @@ int main(int argc, char *argv[])
      /*                                                                              */
      /* IGUAL QUE FASE 2 PERO USANDO MVECTOR (MATRIZ ALMACENADA USANDO 1D ROW-MAJOR) */
      /* EN VEZ DE MATRIZ (MATRIZ ALMACENADA USANDO 2D)                               */
-     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXse                                   */
+     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXse                                  */
      /* **************************************************************************** */
+      for(i = 0; i < m; i++) {
+         for(j = 0; j < n; j++) {
+            sumas += MVector[i*n+j] * VectorV[j];
+         }
+         VectXse[i] = sumas;
+         sumas = 0;
+      }
   timefin=Ctimer();  
   printf("Tiempo FASE 3: Secuencial Matriz con 1D Row-Major  %2.7E sec. Error %1.5E.\n", timefin-timeini, ErrorVector(VectXse, VectXcb, m));
 
@@ -137,12 +156,17 @@ int main(int argc, char *argv[])
      /*                                                                              */
      /* EL ALUMNO DEBE INCORPORAR AQUI EL CODIGO PARA REALIZA EL PRODUCTO MATRIZ POR */
      /* VECTOR DE FORMA PARALELA. AUNQUE SEA POCO EFICIENTE NO USE VARIABLES         */
-     /* AUXILIARES PARA ALMACENAR PARCIALES, TRABAJAR DIRECTAMENTE SOBRE VectXpa      */
-     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXpa                                   */
+     /* AUXILIARES PARA ALMACENAR PARCIALES, TRABAJAR DIRECTAMENTE SOBRE VectXpa     */
+     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXpa                                  */
      /* **************************************************************************** */
 
-     /* ELIMINAR "//" EN LA SIGUENTE LINEA PARA USAR PARALELISMO CUANDO SE NECESITE  */
-     //#pragma omp parallel for private(j)
+     #pragma omp parallel for private(j)
+         for(i = 0; i < m; i++) {
+            for(j = 0; j < n; j++) {
+               VectXpa[i] += Matriz[i][j] * VectorV[j];
+            }
+         }
+
   timefin=Ctimer();
   printf("\n\nTiempo FASE 4: Paralelo sin variables auxiliares %2.7E sec. Error %1.5E.\n", timefin-timeini, ErrorVector(VectXpa, VectXcb, m));
 
@@ -153,15 +177,21 @@ int main(int argc, char *argv[])
   /*                                                                                 */
   /* ******************************************************************************* */
   timeini=Ctimer();  
-     /* **************************************************************************** */
-     /*                                                                              */
-     /* IGUAL QUE FASE 4 PERO USANDO VARIABLES AUXILIARES GLOBALES PARA ALMACENAR    */
-     /* RESULTADOS PARCIALES / INTERMEDIOS                                           */
-     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXpa                                   */
-     /* **************************************************************************** */
+      /* **************************************************************************** */
+      /*                                                                              */
+      /* IGUAL QUE FASE 4 PERO USANDO VARIABLES AUXILIARES GLOBALES PARA ALMACENAR    */
+      /* RESULTADOS PARCIALES / INTERMEDIOS                                           */
+      /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXpa                                  */
+      /* **************************************************************************** */
 
-     /* ELIMINAR "//" EN LA SIGUENTE LINEA PARA USAR PARALELISMO CUANDO SE NECESITE  */
-     //#pragma omp parallel for private(j, sumap)
+      #pragma omp parallel for private(j, sumap)
+         for(i = 0; i < m; i++) {
+            for(j = 0; j < n; j++) {
+               sumap += Matriz[i][j] * VectorV[j];
+            }
+            VectXpa[i] = sumap;
+            sumap = 0;
+         }
   timefin=Ctimer();
   printf("Tiempo FASE 5: Paralelo con auxiliares globales  %2.7E sec. Error %1.5E.\n", timefin-timeini, ErrorVector(VectXpa, VectXcb, m));
 
@@ -172,15 +202,22 @@ int main(int argc, char *argv[])
   /*                                                                                 */
   /* ******************************************************************************* */
   timeini=Ctimer();  
-     /* **************************************************************************** */
-     /*                                                                              */
-     /* IGUAL QUE FASE 4 PERO USANDO VARIABLES AUXILIARES LOCALES PARA ALMACENAR     */
-     /* RESULTADOS PARCIALES / INTERMEDIOS                                           */
-     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXpa                                   */
-     /* **************************************************************************** */
+      /* **************************************************************************** */
+      /*                                                                              */
+      /* IGUAL QUE FASE 4 PERO USANDO VARIABLES AUXILIARES LOCALES PARA ALMACENAR     */
+      /* RESULTADOS PARCIALES / INTERMEDIOS                                           */
+      /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXpa                                  */
+      /* **************************************************************************** */
 
-     /* ELIMINAR "//" EN LA SIGUENTE LINEA PARA USAR PARALELISMO CUANDO SE NECESITE  */
-     //#pragma omp parallel for
+      #pragma omp parallel for
+         for(i = 0; i < m; i++) {
+            double sumapriv = 0;
+            int j;
+            for(j = 0; j < n; j++) {
+               sumapriv += Matriz[i][j] * VectorV[j];
+            }
+            VectXpa[i] = sumapriv;
+         }
   timefin=Ctimer();
   printf("Tiempo FASE 6: Paralelo con auxiliares locales   %2.7E sec. Error %1.5E.\n", timefin-timeini, ErrorVector(VectXpa, VectXcb, m));
 
@@ -191,15 +228,22 @@ int main(int argc, char *argv[])
   /*                                                                                 */
   /* ******************************************************************************* */
   timeini=Ctimer();  
-     /* **************************************************************************** */
-     /*                                                                              */
-     /* IGUAL QUE FASE 6 PERO USANDO MVECTOR (MATRIZ ALMACENADA USANDO 1D ROW-MAJOR) */
-     /* EN VEZ DE MATRIZ (MATRIZ ALMACENADA USANDO 2D)                               */
-     /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXpa                                   */
-     /* **************************************************************************** */
+      /* **************************************************************************** */
+      /*                                                                              */
+      /* IGUAL QUE FASE 6 PERO USANDO MVECTOR (MATRIZ ALMACENADA USANDO 1D ROW-MAJOR) */
+      /* EN VEZ DE MATRIZ (MATRIZ ALMACENADA USANDO 2D)                               */
+      /* EL RESULTADO FINAL SE DEBE DEJAR EN VectXpa                                  */
+      /* **************************************************************************** */
 
-     /* ELIMINAR "//" EN LA SIGUENTE LINEA PARA USAR PARALELISMO CUANDO SE NECESITE  */
-     //#pragma omp parallel for
+      #pragma omp parallel for
+         for(i = 0; i < m; i++) {
+            double sumapriv = 0;
+            int j;
+            for(j = 0; j < n; j++) {
+               sumapriv += MVector[i*n+j] * VectorV[j];
+            }
+            VectXpa[i] = sumapriv;
+         }
   timefin=Ctimer();  
   printf("Tiempo FASE 7: Paralelo Matriz con 1D Row-Major  %2.7E sec. Error %1.5E.\n", timefin-timeini, ErrorVector(VectXpa, VectXcb, m));
 
@@ -212,11 +256,14 @@ int main(int argc, char *argv[])
   /*                                                                                 */
   /* ******************************************************************************* */
   timeini=Ctimer();  
-     /* **************************************************************************** */
-     /*                                                                              */
-     /* AHORA SUME EN SECUENCIAL LOS ELEMENTOS DEL VECTOR RESULTANTE VectXse         */
-     /* EL RESULTADO DEBE GUARDARDE EN LA VARIABLE sumas                             */
-     /* **************************************************************************** */
+      /* **************************************************************************** */
+      /*                                                                              */
+      /* AHORA SUME EN SECUENCIAL LOS ELEMENTOS DEL VECTOR RESULTANTE VectXse         */
+      /* EL RESULTADO DEBE GUARDARDE EN LA VARIABLE sumas                             */
+      /* **************************************************************************** */
+      for(i = 0; i < m; i++) {
+         sumas += VectXse[i];
+      }
   timefin=Ctimer();
   printf("\n\nTiempo FASE 8: Operador de reducción en secuencial %2.7E sec.\n", timefin-timeini);
 
@@ -228,14 +275,16 @@ int main(int argc, char *argv[])
   /*                                                                                 */
   /* ******************************************************************************* */
   timeini=Ctimer();  
-     /* **************************************************************************** */
-     /*                                                                              */
-     /* AHORA SUME EN PARALELO LOS ELEMENTOS DEL VECTOR RESULTANTE VectXpa           */
-     /* EL RESULTADO DEBE GUARDARDE EN LA VARIABLE sumap                             */
-     /* **************************************************************************** */
+      /* **************************************************************************** */
+      /*                                                                              */
+      /* AHORA SUME EN PARALELO LOS ELEMENTOS DEL VECTOR RESULTANTE VectXpa           */
+      /* EL RESULTADO DEBE GUARDARDE EN LA VARIABLE sumap                             */
+      /* **************************************************************************** */
 
-     /* ELIMINAR "//" EN LA SIGUENTE LINEA PARA USAR PARALELISMO CUANDO SE NECESITE  */
-     //#pragma omp parallel for reduction(+:sumap)
+      #pragma omp parallel for reduction(+:sumap)
+         for(i = 0; i < m; i++) {
+            sumap += VectXpa[i];
+         }
   timefin=Ctimer();
   printf("Tiempo FASE 9: Operador de reducción en paralelo   %2.7E sec. Error %1.5E.\n", timefin-timeini, fabs((sumap-sumas)/(double)m));
 
