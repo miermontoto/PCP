@@ -1,9 +1,5 @@
 #include "Prototipos.h"
 
-#define parallel 1
-#define tasks 2
-#define blocks 3
-
 double Ctimer(void)
 {
   struct timeval tm;
@@ -27,6 +23,7 @@ double MyDGEMM(int useless, int m, int n, int k, double alpha, double* A, int ld
   A = transpose(A, m, k);
 
   int i, j, p;
+  #pragma omp parallel for private(j, p)
   for(i = 0; i < m; i++) {
     for(j = 0; j < n; j++) {
       double tmp = 0.0;
@@ -44,14 +41,22 @@ double MyDGEMMT(int useless, int m, int n, int k, double alpha, double *A, int l
   A = transpose(A, m, k);
 
   int i, j, p;
-  for(i = 0; i < m; i++) {
-    for(j = 0; j < n; j++) {
-      double tmp = 0.0;
-      for(p = 0; p < k; p++) {
-        tmp += A[p + i * ldb] * B[p + j * ldb];
+
+  #pragma omp parallel
+    #pragma omp single
+    for(i = 0; i < m; i++) {
+
+      #pragma omp task
+      {
+        for(j = 0; j < n; j++) {
+          double tmp = 0.0;
+          for(p = 0; p < k; p++) {
+            tmp += A[p + i * ldb] * B[p + j * ldb];
+          }
+          C[i + j * ldc] = alpha * tmp + beta * C[i + j * ldc];
+        }
       }
-      C[i + j * ldc] = alpha * tmp + beta * C[i + j * ldc];
-    }
+
   }
 
   return 0.0;
