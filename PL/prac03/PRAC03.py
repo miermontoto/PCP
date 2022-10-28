@@ -9,7 +9,7 @@ def printTime(startTime, msg):
     print(f"({msg}) time: {time.time() - startTime}")
 
 list = ['IccO0', 'IccO3']
-funcs = ['MyDGEMMT']
+funcs = ['MyDGEMM', 'MyDGEMMT']
 
 for lib in list:
     Lib = ctypes.cdll.LoadLibrary('LIBS/PRAC' + lib + '.so')

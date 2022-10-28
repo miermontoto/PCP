@@ -1,0 +1,25 @@
+#!/bin/bash
+# Este script ejecuta el fichero introducido como argumento a través de la "ColaGPU"
+# A continuación, imprime el resultado del fichero con el nombre resultante "<argumento>.o<numId>"
+# Finalmente, elimina el fichero resultante.
+
+if [ ! $# -eq 1 ]; then
+    echo "USO: enp <fichero>"
+    exit 1
+fi
+
+if [ ! -x $1 ]; then
+    echo "ERROR: El fichero $1 no existe o no es ejecutable."
+    exit 1
+fi
+
+ColaGPU $1
+echo "Esperando..."
+
+while [ $(qstat | wc -l) -gt 2 ]; do
+    sleep 1
+done
+
+cat $1.o*
+rm $1.o*
+
