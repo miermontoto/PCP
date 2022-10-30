@@ -15,5 +15,7 @@ if [ ! -x LIBS/PRACIccO3.so ]; then
    exit 1
 fi
 
+l3=$(lscpu | grep "L3 cache" | awk '{print $3}')
+
 # 3.- Ejecutar el ejemplo
-python PRAC03.py
+python PRAC03.py l3

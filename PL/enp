@@ -23,3 +23,7 @@ done
 cat $1.o*
 rm $1.o*
 
+if [ -f core.* ]; then
+    rm core.*
+fi
+
