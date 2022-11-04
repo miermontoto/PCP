@@ -78,14 +78,17 @@ double MyDGEMMT(int tipo, int m, int n, int k, double alpha, double *A, int lda,
 
 double MyDGEMMB(int tipo, int m, int n, int k, double alpha, double* A, int lda, double* B, int ldb, double beta, double* C, int ldc, int blk) {
   int i, j, p;
+  int targetType = Normal;
 
   for(i = 0; i < m*n; i++) {
     C[i] = beta * C[i];
   }
 
-  if(tipo == TransA) {A = transpose(A, m, k);}
-  int targetType = Normal;
-  if(tipo == TransA) {targetType = TransB;}
+  if(tipo == TransA) {
+    A = transpose(A, m, k);
+    targetType = TransB;
+  }
+
 
   for(i = 0; i < m; i += blk) {
     for(j = 0; j < n; j += blk) {

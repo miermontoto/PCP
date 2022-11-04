@@ -6,10 +6,13 @@ from numpy import linalg as LA
 from numpy.ctypeslib import ndpointer
 from time import time
 
+def printTime(startTime, msg):
+    print(f"({msg}) time: {time() - startTime}")
+
 
 
 #########################################################################
-# Prepara gestión librería externa de Profesor 	(NO MODIFICAR)		#
+# Prepara gestión librería externa de Profesor 	(NO MODIFICAR)	    	#
 #########################################################################
 libProf = ctypes.cdll.LoadLibrary('./mandelProf.so')
 # Preparando para el uso de "void mandel(double, double, double, double, int, int, int, double *)"
@@ -48,8 +51,26 @@ binarizaProf.argtypes = [ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, 
 # el fractal siguiendo el pseudocódigo del guion. Resultado en vector A	#
 #########################################################################
 def mandelPy(xmin, ymin, xmax, ymax, maxiter, xres, yres, A):
-    return
 
+    dx = (xmax - xmin) / xres
+    dy = (ymax - ymin) / yres
+
+    for i in range(yres):
+        for j in range(xres):
+            c = complex(xmin + i * dx, ymin + j * dy)
+            z = complex(0, 0)
+            for k in range(1, maxiter):
+                if abs(z) >= 2: break
+                z = z**2 + c
+            A[i + j * xres] = 0 if k >= maxiter else k
+
+
+
+def diffImage(vect1, vect2):
+    vectResult = np.zeros(vect1.shape)
+    for i in range(len(vect1)):
+        vectResult[i] = 255 if vect1[i] != vect2[i] else 0
+    return vectResult
 
 #########################################################################
 # 	Función para guardar la imagen a archivo (NO MODIFICAR)		        #
@@ -57,8 +78,8 @@ def mandelPy(xmin, ymin, xmax, ymax, maxiter, xres, yres, A):
 def grabar(vect, xres, yres, output):
     A2D=vect.astype(np.ubyte).reshape(yres,xres) #row-major por defecto
     im=Image.fromarray(A2D)
-    im.save(outputfile)
-    print(f"Grabada imagen como {outputfile}")
+    im.save(output)
+    print(f"Grabada imagen como {output}")
 
 
 #########################################################################
@@ -78,53 +99,40 @@ if __name__ == "__main__":
     maxiter=int(sys.argv[5])
     outputfile = sys.argv[6]
 
-    #  Cálculo de otras variables necesarias						#
-    xres=...
-    ymax=...
-
-
+    #  Cálculo de otras variables necesarias
+    ymax=xmax-xmin+ymin
+    xres=yres
 
     #  Reserva de memoria de las imágenes en 1D	(AÑADIR TANTAS COMO SEAN NECESARIAS)	#
-    fractalPy = np.zeros(yres*xres).astype(np.double) #Esta es para el alumnado, versión python
-    fractalProf = np.zeros(yres*xres).astype(np.double) #Esta es para el profesor
-
-
-
+    mem = ['fractalPy', 'fractalC', 'fractalProf']
+    for i in mem:
+        locals()[i] = np.zeros(yres*xres).astype(np.double)
 
 
     #  Comienzan las ejecuciones							#
     print(f'\nCalculando fractal de {yres}x{xres} maxiter:{maxiter}:')
 
-    #  Llamada a la función de cálculo del fractal en python (versión alumnx)	(NO MODIFICAR) #
-    sPy = time()
-    mandelPy(xmin, ymin, xmax, ymax, maxiter, xres, yres, fractalPy)
-    sPy = time()- sPy
-    print(f"mandelPy		ha tardado {sPy:1.5E} segundos")
-
-    #  Llamada a la función de cálculo del fractal en C (versión profesor) (NO MODIFICAR) #
-    sC = time()
-    mandelProf(xmin, ymin, xmax, ymax, maxiter, xres, yres, fractalProf)
-    sC = time()- sC
-    print(f"mandelC (prof)		ha tardado {sC:1.5E} segundos")
+    calls = ['mandelPy', 'mandelProf']
+    names = ['fractalPy', 'fractalProf']
+    for i in range(len(calls)):
+        startTime = time()
+        locals()[calls[i]](xmin, ymin, xmax, ymax, maxiter, xres, yres, locals()[names[i]])
+        printTime(startTime, calls[i])
 
     #  Comprobación del error de cálculo del fractal en python (versión alumnx frente a prof) (No MODIFICAR)#
     print('El error es '+ str(LA.norm(fractalPy-fractalProf)))
 
 
-    #  Llamada a la función de cálculo del fractal en C (versión alumnx). 		#
-
-
-
-
     #  Comprobación del error de cálculo del fractal en C (versión alumnx frente a prof)#
 
 
-
     #  Llamada a la función de cálculo de la media (versión profesor) 	(NO MODIFICAR) 	#
+    """
     sM = time()
     promedioProf=mediaProf(xres, yres, fractalProf)
     sM = time()- sM
     print(f"Promedio (prof)={promedioProf:1.3E}	ha tardado {sM:1.5E} segundos")
+    """
 
     #  Llamada a la función de cálculo de la media en C (versión alumnx)		#
 
@@ -137,10 +145,12 @@ if __name__ == "__main__":
 
 
     #  Llamada a la función de cálculo del binarizado (versión profesor) (NO MODIFICAR)	#
+    """
     sB = time()
     binarizaProf(xres, yres, fractalProf, promedioProf)
     sB = time()- sB
     print(f"Binariza (prof)		ha tardado {sB:1.5E} segundos")
+    """
 
     #  Llamada a la función de cálculo del binarizado en C (versión alumnx)		#
 
@@ -154,6 +164,8 @@ if __name__ == "__main__":
 
     #  Grabar a archivo	la imagen que se desee (SOLO PARA DEPURAR)			#
     grabar(fractalPy,xres,yres,outputfile)
+    grabar(fractalProf,xres,yres,outputfile.split('.')[0]+'_prof.'+outputfile.split('.')[1])
+    grabar(diffImage(fractalPy,fractalProf),xres,yres,outputfile.split('.')[0]+'_diff.'+outputfile.split('.')[1])
 
 
 

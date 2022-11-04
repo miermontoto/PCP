@@ -2,6 +2,7 @@ import ctypes
 import numpy as np
 import random
 import time
+import sys
 import math
 from numpy.ctypeslib import ndpointer as ND
 from numpy           import linalg    as LA
@@ -9,7 +10,7 @@ from numpy           import linalg    as LA
 def printTime(startTime, msg):
     print(f"({msg}) time: {time.time() - startTime}")
 
-list = ['IccO3']
+list = ['IccO0', 'IccO3']
 funcs = ['MyDGEMM', 'MyDGEMMT', 'MyDGEMMB']
 
 for lib in list:
@@ -25,16 +26,21 @@ for lib in list:
 
 
 print()
-pythonMeasuring = False
+
 simplifyOutput = True
+
+Normal = 1
+TransA = 2
+acceptedTypes = [Normal, TransA]
 
 talla = [200, 250, 300, 350, 400]
 rept  = [ 10,   8,   6,   4,   2]
 alpha = random.randint(1, 10) * random.random()
 beta  = random.randint(1, 10) * random.random()
-tipos = [1, 2]
+tipos = [Normal, TransA]
 
 for tipo in tipos:
+  if tipo not in acceptedTypes: raise Exception(f"Invalid type {tipo}")
   if len(tipos) > 1: print(f"Tipo: {tipo}")
   for func in funcs:
     print(func, end='\n' if not simplifyOutput else '... ')
@@ -53,12 +59,12 @@ for tipo in tipos:
       D = np.copy(C)
       D = beta*D + alpha*(A @ B)
 
-      if pythonMeasuring:
+      if not simplifyOutput:
         start = time.time()
         for j in range(rept[i]):
           D = np.copy(C)
           D = beta*D + alpha*(A @ B)
-        printTime(start, 'Python')
+        printTime(start, 'Python               ')
 
       A = np.asarray(A, order='F')
       B = np.asarray(B, order='F')
