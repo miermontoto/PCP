@@ -1,5 +1,7 @@
 #include "Prototipos.h"
 
+#define TransB 3 // Tipo especial que se utiliza para reutilizar el primer método cuando se trabaja por bloques y de manera traspuesta.
+
 double Ctimer(void)
 {
   struct timeval tm;
@@ -19,44 +21,6 @@ double* transpose(double *A, int m, int n) {
   return At;
 }
 
-void voidTransposeEqual(double *A, int m, int n) {
-  int i, j;
-  double* At = (double*) malloc(m*n*sizeof(double));
-  for (i = 0; i < m; i++)
-    for (j = 0; j < n; j++)
-      At[i*n+j] = A[j*m+i];
-  A = At;
-  free(At);
-}
-
-void voidTransposeMemcpy(double *A, int m, int n) {
-  int i, j;
-  double* At = (double*) malloc(m*n*sizeof(double));
-  for (i = 0; i < m; i++)
-    for (j = 0; j < n; j++)
-      At[i*n+j] = A[j*m+i];
-  memcpy(A, At, m*n*sizeof(double));
-  free(At);
-}
-
-void voidTransposeCopy(double *A, int m, int n) {
-  int i, j;
-  double* At = (double*) malloc(m*n*sizeof(double));
-  for (i = 0; i < m; i++)
-    for (j = 0; j < n; j++)
-      At[i*n+j] = A[j*m+i];
-  for(i = 0; i < m*n; i++)
-    A[i] = At[i];
-  free(At);
-}
-
-void voidTransposeReserve(double *A, double* At, int m, int n) {
-  int i, j;
-  for (i = 0; i < m; i++)
-    for (j = 0; j < n; j++)
-      At[i*n+j] = A[j*m+i];
-}
-
 double MyDGEMM(int tipo, int m, int n, int k, double alpha, double* A, int lda, double* B, int ldb, double beta, double* C, int ldc) {
   int i, j, p;
 
@@ -70,7 +34,7 @@ double MyDGEMM(int tipo, int m, int n, int k, double alpha, double* A, int lda, 
       double tmp = 0.0;
       for(p = 0; p < k; p++) {
         double target = A[i + p * lda];
-        if(tipo == TransA) {
+        if(tipo == TransA || tipo == TransB) {
           target = A[p + i * ldb];
         }
         tmp += target * B[p + j * ldb];
@@ -120,6 +84,8 @@ double MyDGEMMB(int tipo, int m, int n, int k, double alpha, double* A, int lda,
   }
 
   if(tipo == TransA) {A = transpose(A, m, k);}
+  int targetType = Normal;
+  if(tipo == TransA) {targetType = TransB;}
 
   for(i = 0; i < m; i += blk) {
     for(j = 0; j < n; j += blk) {
@@ -128,7 +94,8 @@ double MyDGEMMB(int tipo, int m, int n, int k, double alpha, double* A, int lda,
         if(tipo == TransA) {
           target = &A[p + i * ldb];
         }
-        MyDGEMM(Normal, blk, blk, blk, alpha, target, lda, &B[p + j * ldb], ldb, 1, &C[i + j * ldc], ldc);
+
+        MyDGEMM(targetType, blk, blk, blk, alpha, target, lda, &B[p + j * ldb], ldb, 1, &C[i + j * ldc], ldc);
       }
     }
   }
