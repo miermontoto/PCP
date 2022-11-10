@@ -1,3 +1,4 @@
+!resultados/*.sh.*
 *.sh.*
 LIBS
 .vscode

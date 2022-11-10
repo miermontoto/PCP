@@ -7,11 +7,16 @@ import math
 from numpy.ctypeslib import ndpointer as ND
 from numpy           import linalg    as LA
 
-def printTime(startTime, msg):
-    print(f"({msg}) time: {time.time() - startTime}")
-
 list = ['IccO0', 'IccO3']
-funcs = ['MyDGEMM', 'MyDGEMMT', 'MyDGEMMB']
+funcs = ['MyDGEMMT']
+validFuncs = ['MyDGEMMT', 'MyDGEMM', 'MyDGEMMB']
+
+for func in validFuncs:
+  if func in sys.argv: funcs = [func]
+
+for func in funcs:
+  if not func in validFuncs: raise Exception('Invalid function: ' + func)
+
 
 for lib in list:
     Lib = ctypes.cdll.LoadLibrary('LIBS/PRAC' + lib + '.so')
@@ -27,31 +32,39 @@ for lib in list:
 
 print()
 
-simplifyOutput = True
+simplifyOutput = "simplify" in sys.argv
+calculatePython = "python" in sys.argv
 
 Normal = 1
 TransA = 2
 acceptedTypes = [Normal, TransA]
 
-talla = [200, 250, 300, 350, 400]
-rept  = [ 10,   8,   6,   4,   2]
-alpha = random.randint(1, 10) * random.random()
-beta  = random.randint(1, 10) * random.random()
-tipos = [Normal, TransA]
+talla = [1000, 2000, 3000]
+rept  = [10, 8, 6, 4, 2]
+alpha = 1.3
+beta  = 1.7
+tipos = [TransA]
+
+if "test" in sys.argv:
+  for i in range(0, len(talla)):
+    talla[i] /= 10
+
+if not simplifyOutput:
+  print("Function;Library;Size;Repetitions;Time;Error;Type;BlockSize")
 
 for tipo in tipos:
   if tipo not in acceptedTypes: raise Exception(f"Invalid type {tipo}")
-  if len(tipos) > 1: print(f"Tipo: {tipo}")
   for func in funcs:
-    print(func, end='\n' if not simplifyOutput else '... ')
+    if simplifyOutput: print(f"{func}...")
     validMeasurement = True
     for i in range(0, len(talla)):
       m = talla[i]
-      n = m
-      k = m  # matrices cuadradas
+      n = m + 1
+      k = m - 1
       blk = int(m / 10)
-
-      if not simplifyOutput: print(f"Talla: {m}, repeticiones: {rept[i]}")
+      if "squareSize" in sys.argv:
+        n = m
+        k = m
 
       A = np.random.rand(m, k).astype(np.float64)
       B = np.random.rand(k, n).astype(np.float64)
@@ -59,12 +72,12 @@ for tipo in tipos:
       D = np.copy(C)
       D = beta*D + alpha*(A @ B)
 
-      if not simplifyOutput:
+      if not simplifyOutput and calculatePython:
         start = time.time()
         for j in range(rept[i]):
           D = np.copy(C)
           D = beta*D + alpha*(A @ B)
-        printTime(start, 'Python               ')
+        print(f"Python;numpy;{m}x{n}x{k};{rept[i]};{time.time() - start};-;-;-")
 
       A = np.asarray(A, order='F')
       B = np.asarray(B, order='F')
@@ -81,7 +94,7 @@ for tipo in tipos:
           errmedio += LA.norm(D-F, 'fro')
 
         if not simplifyOutput:
-          printTime(start, f"{lib}, e: {errmedio/(rept[i]):1.5E}")
+          print(f"{func};{lib};{m}x{n}x{k};{rept[i]};{time.time() - start};{errmedio / rept[i]};{tipo};{blk if func == 'MyDGEMMB' else '-'}")
         validMeasurement &= (errmedio/(rept[i]) < 1.0E-10)
     if simplifyOutput:
       print("OK" if validMeasurement else "ERROR")

@@ -89,19 +89,24 @@ double MyDGEMMB(int tipo, int m, int n, int k, double alpha, double* A, int lda,
     targetType = TransB;
   }
 
+  //omp_set_max_active_levels(1);
 
-  for(i = 0; i < m; i += blk) {
-    for(j = 0; j < n; j += blk) {
-      for(p = 0; p < k; p += blk) {
-        double* target = &A[i + p * lda];
-        if(tipo == TransA) {
-          target = &A[p + i * ldb];
+  //#pragma omp parallel
+    //#pragma omp single
+    for(i = 0; i < m; i += blk) {
+
+      //#pragma omp task firstprivate(i) private(j, p)
+      for(j = 0; j < n; j += blk) {
+        for(p = 0; p < k; p += blk) {
+          double* target = &A[i + p * lda];
+          if(tipo == TransA) {
+            target = &A[p + i * ldb];
+          }
+
+          MyDGEMM(targetType, blk, blk, blk, alpha, target, lda, &B[p + j * ldb], ldb, 1, &C[i + j * ldc], ldc);
         }
-
-        MyDGEMM(targetType, blk, blk, blk, alpha, target, lda, &B[p + j * ldb], ldb, 1, &C[i + j * ldc], ldc);
       }
     }
-  }
 
   return 0.0;
 }
