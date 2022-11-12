@@ -1,0 +1,11 @@
+results=$(qacct -j -d 7)
+
+# return list of users sorted by number of jobs submitted
+echo "Top usuarios"
+echo "$results" | grep -E "owner" | sort | uniq -c | sort -nr | tr -s ' ' | cut -d ' ' -f 2,4 | head -n 5
+
+echo
+
+# return list of queues sorted by number of jobs submitted
+echo "Top colas"
+echo "$results" | grep -E "qname" | sort | uniq -c | sort -nr | tr -s ' ' | cut -d ' ' -f 2,4
