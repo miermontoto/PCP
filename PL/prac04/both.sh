@@ -1,0 +1,1 @@
+sh bothMiddle.sh | column -t -s ';'
