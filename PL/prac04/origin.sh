@@ -1,2 +1,2 @@
 make >/dev/null
-rm -f *.bmp
+rm -f *.bmp *.done

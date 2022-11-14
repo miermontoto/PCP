@@ -5,10 +5,8 @@ import ctypes
 import numpy as np
 from numpy import linalg as LA
 from numpy.ctypeslib import ndpointer
-from time import time
+import time
 
-def printTime(startTime, msg):
-    print(f"({msg}) time: {time() - startTime}")
 
 debug = "debug" in sys.argv
 binarizar = "binarizar" in sys.argv
@@ -136,9 +134,9 @@ if __name__ == "__main__":
         for name in names: locals()[name] = np.zeros(yres*xres).astype(np.double) # reservar memoria
 
         for i in range(len(calls)):
-            startTime = time()
+            startTime = time.time()
             locals()[calls[i]](xmin, ymin, xmax, ymax, maxiter, xres, yres, locals()[names[i]]) # ejecutar función
-            finishTime = time()
+            finishTime = time.time()
 
             average = locals()[averages[i]](yres, xres, locals()[names[i]]) # calcular promedio
             error = "-" if i == 0 else LA.norm(locals()[names[i]] - locals()[names[0]]) # calcular error
@@ -156,3 +154,8 @@ if __name__ == "__main__":
                 error = "-" if i == 0 else LA.norm(locals()[binariesNames[i]] - locals()[binariesNames[0]])
                 print(f";{error}")
                 if debug: grabar(locals()[binariesNames[i]], xres, yres, f"{binariesNames[i]}_{size}.bmp")
+
+        with open(f"{size}.done", "w") as f: f.write(time.strftime("%H:%M:%S", time.localtime()))
+
+    # remove all done files
+    for size in sizes: os.remove(f"{size}.done")
