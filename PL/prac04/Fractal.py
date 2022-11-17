@@ -144,7 +144,7 @@ if __name__ == "__main__":
             average = locals()[averages[i]](yres, xres, locals()[names[i]]) # calcular promedio
             error = "-" if i == 0 else LA.norm(locals()[names[i]] - locals()[names[0]]) # calcular error
 
-            print(f"{calls[i]};{mode};{size};{finishTime - startTime};{error};{average}", end="" if binarizar else "\n")
+            print(f"{calls[i]};{mode};{size};{finishTime - startTime};{'-' if average == '-' else error};{'-' if average == 0.0 else average}", end="" if binarizar else "\n")
 
             if debug:
                 grabar(locals()[names[i]], xres, yres, f"{names[i]}_{size}.bmp") # guardar archivo
