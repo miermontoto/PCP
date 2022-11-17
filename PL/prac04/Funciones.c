@@ -41,25 +41,49 @@ int mandel_iter(double x, double y, int maxiter) {
 
 double promedio(int xres, int yres, double* A) {
 
-   double x = 0.0;
+      double x = 0.0;
 
-   int i, j;
-   for (i = 0; i < xres; i++) {
-         for (j = 0; j < yres; j++) {
-               x += A[i + j * xres];
-         }
-   }
+      int i, j;
+      #pragma omp parallel for private(i, j) shared(A) reduction(+:x)
+      for (i = 0; i < xres; i++) {
+            for (j = 0; j < yres; j++) {
+                  x += A[i + j * xres];
+            }
+      }
 
-   return x / (xres * yres);
+      return x / (xres * yres);
 }
+
+double promedio_improved(int xres, int yres, double* A) {
+      double partialSum;
+      double totalSum = 0.0;
+
+      #pragma omp parallel private(partialSum)
+      {
+            partialSum = 0.0;
+            int i, j;
+            #pragma omp for
+            for (i = 0; i < xres; i++) {
+                  for (j = 0; j < yres; j++) {
+                        partialSum += A[i + j * xres];
+                  }
+            }
+            #pragma omp atomic
+            totalSum += partialSum;
+      }
+
+      return totalSum / (xres * yres);
+}
+
 
 void binariza(int xres, int yres, double* A, double med) {
 
-   int i, j;
-   for (i = 0; i < xres; i++) {
-         for (j = 0; j < yres; j++) {
-               A[i + j * xres] = A[i + j * xres] > med ? 255 : 0;
-         }
-   }
+      int i, j;
+      #pragma omp parallel for private(i, j) shared(A)
+      for (i = 0; i < xres; i++) {
+            for (j = 0; j < yres; j++) {
+                  A[i + j * xres] = A[i + j * xres] > med ? 255 : 0;
+            }
+      }
 }
 

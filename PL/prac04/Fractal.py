@@ -13,6 +13,7 @@ binarizar = "binarizar" in sys.argv
 diffs = "diffs" in sys.argv
 
 validCalls = ['mandelProf', 'mandelPy', 'mandelAlumnx']
+validRemoves = ['-mandelProf', '-mandelPy', '-mandelAlumnx']
 assignedNames = ['fractalProf', 'fractalPy', 'fractalAlumnx']
 assignedAverages = ['mediaProf', 'mediaPy', 'mediaAlumnx']
 assignedBinaries = ['binarizaProf', 'binarizaPy', 'binarizaAlumnx']
@@ -32,6 +33,13 @@ for i in range(5, len(sys.argv)):
         if binarizar:
             binaries.append(assignedBinaries[validCalls.index(sys.argv[i])])
             binariesNames.append(assignedBinariesNames[validCalls.index(sys.argv[i])])
+    elif sys.argv[i] in validRemoves:
+        calls.remove(sys.argv[i])
+        names.remove(assignedNames[validCalls.index(sys.argv[i])])
+        averages.remove(assignedAverages[validCalls.index(sys.argv[i])])
+        if binarizar:
+            binaries.remove(assignedBinaries[validCalls.index(sys.argv[i])])
+            binariesNames.remove(assignedBinariesNames[validCalls.index(sys.argv[i])])
     if "sizes" in sys.argv[i]:
         for j in range(i+1, len(sys.argv)):
             try:
