@@ -40,21 +40,6 @@ int mandel_iter(double x, double y, int maxiter) {
 
 
 double promedio(int xres, int yres, double* A) {
-
-      double x = 0.0;
-
-      int i, j;
-      #pragma omp parallel for private(i, j) shared(A) reduction(+:x)
-      for (i = 0; i < xres; i++) {
-            for (j = 0; j < yres; j++) {
-                  x += A[i + j * xres];
-            }
-      }
-
-      return x / (xres * yres);
-}
-
-double promedio_improved(int xres, int yres, double* A) {
       double partialSum;
       double totalSum = 0.0;
 

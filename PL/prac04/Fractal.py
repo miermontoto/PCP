@@ -13,17 +13,14 @@ binarizar = "binarizar" in sys.argv
 diffs = "diffs" in sys.argv
 
 validCalls = ['mandelProf', 'mandelPy', 'mandelAlumnx']
-validRemoves = ['-mandelProf', '-mandelPy', '-mandelAlumnx']
 assignedNames = ['fractalProf', 'fractalPy', 'fractalAlumnx']
 assignedAverages = ['mediaProf', 'mediaPy', 'mediaAlumnx']
 assignedBinaries = ['binarizaProf', 'binarizaPy', 'binarizaAlumnx']
-assignedBinariesNames = ['bin_fractalProf', 'bin_fractalPy', 'bin_fractalAlumnx']
 
 calls = []
 names = []
 averages = []
 binaries = []
-binariesNames = []
 sizes = []
 for i in range(5, len(sys.argv)):
     if sys.argv[i] in validCalls:
@@ -32,14 +29,12 @@ for i in range(5, len(sys.argv)):
         averages.append(assignedAverages[validCalls.index(sys.argv[i])])
         if binarizar:
             binaries.append(assignedBinaries[validCalls.index(sys.argv[i])])
-            binariesNames.append(assignedBinariesNames[validCalls.index(sys.argv[i])])
-    elif sys.argv[i] in validRemoves:
-        calls.remove(sys.argv[i])
-        names.remove(assignedNames[validCalls.index(sys.argv[i])])
-        averages.remove(assignedAverages[validCalls.index(sys.argv[i])])
+    elif sys.argv[i][1:] in validCalls and sys.argv[i][0] == "-":
+        calls.remove(sys.argv[i][1:])
+        names.remove(assignedNames[validCalls.index(sys.argv[i][1:])])
+        averages.remove(assignedAverages[validCalls.index(sys.argv[i][1:])])
         if binarizar:
-            binaries.remove(assignedBinaries[validCalls.index(sys.argv[i])])
-            binariesNames.remove(assignedBinariesNames[validCalls.index(sys.argv[i])])
+            binaries.remove(assignedBinaries[validCalls.index(sys.argv[i][1:])])
     if "sizes" in sys.argv[i]:
         for j in range(i+1, len(sys.argv)):
             try:
@@ -156,12 +151,12 @@ if __name__ == "__main__":
                 if diffs and i > 0: grabar(diffImage(locals()[names[i]], locals()[names[0]]), xres, yres, f"diff_{names[i]}_{size}.bmp")
 
             if binarizar:
-                locals()[binariesNames[i]] = np.copy(locals()[names[i]])
+                locals()[f"bin{names[i]}"] = np.copy(locals()[names[i]])
 
-                locals()[binaries[i]](yres, xres, locals()[binariesNames[i]], average)
-                error = "-" if i == 0 else LA.norm(locals()[binariesNames[i]] - locals()[binariesNames[0]])
+                locals()[binaries[i]](yres, xres, locals()[f"bin{names[i]}"], average)
+                error = "-" if i == 0 else LA.norm(locals()[f"bin{names[i]}"] - locals()[f"bin{names[0]}"])
                 print(f";{error}")
-                if debug: grabar(locals()[binariesNames[i]], xres, yres, f"{binariesNames[i]}_{size}.bmp")
+                if debug: grabar(locals()[f"bin{names[i]}"], xres, yres, f"bin_{names[i]}_{size}.bmp")
 
         with open(f"{size}.done", "w") as f: f.write(time.strftime("%H:%M:%S", time.localtime()))
 

@@ -1,7 +1,7 @@
 sh origin.sh
 . ./values.sh
 
-params="${xmin} ${xmax} ${ymin} ${maxiter} mandelProf mandelPy mandelAlumnx binarizar sizes 1024"
+params="${xmin} ${xmax} ${ymin} ${maxiter} mandelProf mandelPy mandelAlumnx binarizar debug sizes 1024"
 
 # Secuencial
 export OMP_NUM_THREADS=1
