@@ -1,0 +1,12 @@
+__global__ void kernel6_1(double*, double*, const int);
+__global__ void kernel6_1Sh(double*, double*, const int);
+__global__ void kernel6_2(double*, double*, double*, const int);
+__global__ void kernel6_2Sh(double*, double*, double*, const int);
+__global__ void kernel6_3(double*, double*, double*, const int);
+__global__ void kernel6_3Sh(double*, double*, double*, const int);
+__global__ void kernel6_4(double*, double*, double*, const int);
+__global__ void kernel6_4Sh(double*, double*, double*, const int);
+__global__ void kernel6_5(double*, double*, double*, const int);
+__global__ void kernel6_5Sh(double*, double*, double*, const int);
+__global__ void kernel6_6(double*, double*, double*, const int);
+__global__ void kernel6_6Sh(double*, double*, double*, const int);
