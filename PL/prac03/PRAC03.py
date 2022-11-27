@@ -4,6 +4,7 @@ import random
 import time
 import sys
 import math
+import os
 from numpy.ctypeslib import ndpointer as ND
 from numpy           import linalg    as LA
 
@@ -34,6 +35,9 @@ print()
 
 simplifyOutput = "simplify" in sys.argv
 calculatePython = "python" in sys.argv
+noheader = "noheader" in sys.argv
+modo = "SECUENCIAL" if os.environ.get("OMP_NUM_THREADS") == '1' else "PARALELO"
+
 
 Normal = 1
 TransA = 2
@@ -49,8 +53,8 @@ if "test" in sys.argv:
   for i in range(0, len(talla)):
     talla[i] /= 10
 
-if not simplifyOutput:
-  print("Function;Library;Size;Repetitions;Time;Error;Type;BlockSize")
+if not simplifyOutput and not noheader:
+  print("Function;Library;Mode;Size;Repetitions;Time;Error;Type;BlockSize")
 
 for tipo in tipos:
   if tipo not in acceptedTypes: raise Exception(f"Invalid type {tipo}")
@@ -77,7 +81,7 @@ for tipo in tipos:
         for j in range(rept[i]):
           D = np.copy(C)
           D = beta*D + alpha*(A @ B)
-        print(f"Python;numpy;{m}x{n}x{k};{rept[i]};{time.time() - start};-;-;-")
+        print(f"Python;openBLAS;{modo};{m}x{n}x{k};{rept[i]};{time.time() - start};-;-;-")
 
       A = np.asarray(A, order='F')
       B = np.asarray(B, order='F')
@@ -94,7 +98,7 @@ for tipo in tipos:
           errmedio += LA.norm(D-F, 'fro')
 
         if not simplifyOutput:
-          print(f"{func};{lib};{m}x{n}x{k};{rept[i]};{time.time() - start};{errmedio / rept[i]};{tipo};{blk if func == 'MyDGEMMB' else '-'}")
+          print(f"{func};{lib};{modo};{m}x{n}x{k};{rept[i]};{time.time() - start};{errmedio / rept[i]};{tipo};{blk if func == 'MyDGEMMB' else '-'}")
         validMeasurement &= (errmedio/(rept[i]) < 1.0E-10)
     if simplifyOutput:
       print("OK" if validMeasurement else "ERROR")

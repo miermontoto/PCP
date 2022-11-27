@@ -11,6 +11,8 @@ import time
 debug = "debug" in sys.argv
 binarizar = "binarizar" in sys.argv
 diffs = "diffs" in sys.argv
+tiempos = "tiempos" in sys.argv
+mode = "SECUENCIAL" if os.environ.get("OMP_NUM_THREADS") == '1' else "PARALELO"
 
 validCalls = ['mandelProf', 'mandelPy', 'mandelAlumnx']
 assignedNames = ['fractalProf', 'fractalPy', 'fractalAlumnx']
@@ -22,30 +24,25 @@ names = []
 averages = []
 binaries = []
 sizes = []
-for i in range(5, len(sys.argv)):
-    if sys.argv[i] in validCalls:
-        calls.append(sys.argv[i])
-        names.append(assignedNames[validCalls.index(sys.argv[i])])
-        averages.append(assignedAverages[validCalls.index(sys.argv[i])])
-        if binarizar:
-            binaries.append(assignedBinaries[validCalls.index(sys.argv[i])])
-    elif sys.argv[i][1:] in validCalls and sys.argv[i][0] == "-":
+
+for i in range(len(validCalls)):
+    if validCalls[i] in sys.argv:
+        calls.append(validCalls[i])
+        names.append(assignedNames[i])
+        averages.append(assignedAverages[i])
+        binaries.append(assignedBinaries[i])
+    elif sys.argv[i][1:] in validCalls and sys.argv[i][0] == "-" and sys.argv[i][1:] in calls:
         calls.remove(sys.argv[i][1:])
         names.remove(assignedNames[validCalls.index(sys.argv[i][1:])])
         averages.remove(assignedAverages[validCalls.index(sys.argv[i][1:])])
-        if binarizar:
-            binaries.remove(assignedBinaries[validCalls.index(sys.argv[i][1:])])
-    if "sizes" in sys.argv[i]:
-        for j in range(i+1, len(sys.argv)):
-            try:
-                sizes.append(int(sys.argv[j]))
-            except:
-                pass
+        binaries.remove(assignedBinaries[validCalls.index(sys.argv[i][1:])])
 
-if sizes == []: sizes.append(4)
+if "sizes" in sys.argv:
+    for i in range(sys.argv.index("sizes"), len(sys.argv)):
+        try: sizes.append(int(sys.argv[i]))
+        except: pass
 
-# obtain environment variable "OMP_NUM_THREADS"
-mode = "SECUENCIAL" if os.environ.get("OMP_NUM_THREADS") == '1' else "PARALELO"
+if len(sizes) == 0: sizes.append(4) # marcar error si no se detectan tamaños
 
 # Prepara gestión librería externa de Profesor
 libProf = ctypes.cdll.LoadLibrary('./mandelProf.so')
@@ -70,7 +67,7 @@ mandelAlumnx = libAlumnx.mandel
 mandelAlumnx.restype  = mandelProf.restype
 mandelAlumnx.argtypes = mandelProf.argtypes
 
-mediaAlumnx = libAlumnx.promedio
+mediaAlumnx = libAlumnx.promedio_atomic
 mediaAlumnx.restype  = mediaProf.restype
 mediaAlumnx.argtypes = mediaProf.argtypes
 
@@ -128,7 +125,7 @@ if __name__ == "__main__":
 
     ymax = xmax - xmin + ymin
 
-    if not "noheader" in sys.argv: print("Function;Mode;Size;Time;Error;Average", end=";Bin (err)\n" if binarizar else "\n")
+    if not "noheader" in sys.argv: print(f"Function;Mode;Size;Time;Error;Average{';Average Time' if tiempos else ''}{f';Bin (err)' if binarizar else ''}{f';Bin Time' if binarizar and tiempos else ''}")
 
     for size in sizes:
         yres = size
@@ -137,14 +134,19 @@ if __name__ == "__main__":
         for name in names: locals()[name] = np.zeros(yres*xres).astype(np.double) # reservar memoria
 
         for i in range(len(calls)):
-            startTime = time.time()
+            calcTime = time.time()
             locals()[calls[i]](xmin, ymin, xmax, ymax, maxiter, xres, yres, locals()[names[i]]) # ejecutar función
-            finishTime = time.time()
+            calcTime = time.time() - calcTime
 
-            average = locals()[averages[i]](yres, xres, locals()[names[i]]) # calcular promedio
+            averageTime = time.time()
+            average = locals()[averages[i]](xres, yres, locals()[names[i]]) # calcular promedio
+            averageTime = time.time() - averageTime
+            averageStr = '-' if average == 0.0 else average
+
             error = "-" if i == 0 else LA.norm(locals()[names[i]] - locals()[names[0]]) # calcular error
+            errorStr = '-' if str(average)[0] == '-' else error
 
-            print(f"{calls[i]};{mode};{size};{finishTime - startTime};{'-' if average == '-' else error};{'-' if average == 0.0 else average}", end="" if binarizar else "\n")
+            print(f"{calls[i]};{mode};{size};{calcTime};{errorStr};{averageStr}{f';{averageTime:1.5E}' if tiempos else ''}", end="" if binarizar else "\n")
 
             if debug:
                 grabar(locals()[names[i]], xres, yres, f"{names[i]}_{size}.bmp") # guardar archivo
@@ -153,9 +155,12 @@ if __name__ == "__main__":
             if binarizar:
                 locals()[f"bin{names[i]}"] = np.copy(locals()[names[i]])
 
+                binarizationTime = time.time()
                 locals()[binaries[i]](yres, xres, locals()[f"bin{names[i]}"], average)
+                binarizationTime = time.time() - binarizationTime
+
                 error = "-" if i == 0 else LA.norm(locals()[f"bin{names[i]}"] - locals()[f"bin{names[0]}"])
-                print(f";{error}")
+                print(f";{error}{f';{binarizationTime:1.5E}' if tiempos else ''}")
                 if debug: grabar(locals()[f"bin{names[i]}"], xres, yres, f"bin_{names[i]}_{size}.bmp")
 
         with open(f"{size}.done", "w") as f: f.write(time.strftime("%H:%M:%S", time.localtime()))

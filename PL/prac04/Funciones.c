@@ -1,4 +1,5 @@
 #include "Prototipos.h"
+#include <omp.h>
 
 int mandel_iter(double, double, int);
 
@@ -38,28 +39,116 @@ int mandel_iter(double x, double y, int maxiter) {
       return k == maxiter ? 0 : k;
 }
 
+// --- PROMEDIOS --- //
 
-double promedio(int xres, int yres, double* A) {
-      double partialSum;
-      double totalSum = 0.0;
+// Función con variable local para el calculo de cada hilo
+// que se junta al final de las ejecuciones.
+// No mejora prácticamente nada el rendimiento con respecto a una reducción normal.
+// nowait es una adición extra con respecto a las diapositivas que mejora muy ligeramente el rendimiento.
+double promedio_atomic(int xres, int yres, double* A) {
+      double partialSum, totalSum = 0.0;
+      int i, size = xres * yres;
 
       #pragma omp parallel private(partialSum)
       {
             partialSum = 0.0;
-            int i, j;
-            #pragma omp for
-            for (i = 0; i < xres; i++) {
-                  for (j = 0; j < yres; j++) {
-                        partialSum += A[i + j * xres];
-                  }
+
+            #pragma omp for nowait
+            for (i = 0; i < size; i++) {
+                  partialSum += A[i];
             }
+
             #pragma omp atomic
             totalSum += partialSum;
       }
 
-      return totalSum / (xres * yres);
+      return totalSum / size;
 }
 
+// Otra versión de la función promedio_atomic, pero utilizando critical.
+// Debería ser menos eficiente que la versión anterior, pero tienen el mismo rendimiento.
+double promedio_critical(int xres, int yres, double* A) {
+      double partialSum, totalSum = 0.0;
+      int i, size = xres * yres;
+
+      #pragma omp parallel private(partialSum)
+      {
+            partialSum = 0.0;
+
+            #pragma omp for nowait
+            for (i = 0; i < size; i++) {
+                  partialSum += A[i];
+            }
+
+            #pragma omp critical
+            totalSum += partialSum;
+      }
+
+      return totalSum / size;
+}
+
+
+// Función con reducción estándar de OpenMP.
+// Para un tamaño de imagen de 4096, el tiempo de ejecución es ≅1.1*10^-2
+double promedio_reduction(int xres, int yres, double* A) {
+      double sum = 0.0;
+      int i, size = xres * yres;
+
+      #pragma omp parallel for reduction(+:sum)
+      for (i = 0; i < size; i++) {
+            sum += A[i];
+      }
+      return sum / size;
+}
+
+// Función de promedio que utiliza vectorización para eliminar la sobrecarga de atomic y reduction.
+// https://coderwall.com/p/gocbhg/openmp-improve-reduction-techniques
+// Se consigue mejor rendimiento con master que con single.
+double promedio_vectorization(int xres, int yres, double* A) {
+      double partialSum, totalSum = 0.0;
+      double *vect;
+      int hilos, i, size = xres * yres;
+
+      #pragma omp parallel
+      #pragma omp master
+            hilos = omp_get_num_threads();
+
+      vect = (double*) malloc(hilos * sizeof(double));
+
+      #pragma omp parallel private(partialSum)
+      {
+            partialSum = 0.0;
+            #pragma omp for nowait
+            for(i = 0; i < size; ++i) {
+                  partialSum += A[i];
+            }
+
+            vect[omp_get_thread_num()] = partialSum;
+      }
+
+      for (i = 0; i < hilos; ++i)
+            totalSum += vect[i];
+
+      return totalSum / size;
+}
+
+// Versión reduction utilizando un entero para almacenar la suma.
+// Se pierde casi el 50% de rendimiento con respecto a la versión con double.
+double promedio_int(int xres, int yres, double* A) {
+      int sum = 0;
+      int i;
+      int size = xres * yres;
+
+      #pragma omp parallel for reduction(+:sum)
+      for (i = 0; i < size; i++) {
+            sum += A[i];
+      }
+      return sum / (double) size;
+}
+
+// no se puede implementar una función promedio_simd ya que la versión de OpenMP (201107) no soporta la directiva.
+
+// --- BINARIZADOS --- //
 
 void binariza(int xres, int yres, double* A, double med) {
 
@@ -71,4 +160,3 @@ void binariza(int xres, int yres, double* A, double med) {
             }
       }
 }
-
