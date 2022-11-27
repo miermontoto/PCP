@@ -1,4 +1,4 @@
 results=$(qacct -j -d 7)
 
 # return list of unique filenames
-echo "$results" | grep "jobname" | tr -s ' ' | cut -d ' ' -insulinf 2 | sort | uniq
+echo "$results" | grep "jobname" | tr -s ' ' | cut -d ' ' -f 2 | sort | uniq

@@ -1,5 +1,10 @@
 results=$(qacct -j -d 7)
 
+# if the first argument is "total", print the stats without the 7d restriction
+if [ "$1" == "total" ]; then
+    results=$(qacct -j)
+fi
+
 # return list of users sorted by number of jobs submitted
 echo "Top usuarios"
 echo "$results" | grep -E "owner" | sort | uniq -c | sort -nr | tr -s ' ' | cut -d ' ' -f 2,4 | head -n 5
