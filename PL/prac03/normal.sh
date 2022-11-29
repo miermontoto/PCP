@@ -2,7 +2,7 @@
 sh EjecutaPrac03.sh
 
 export OMP_NUM_THREADS=1
-python3 PRAC03.py MyDGEMM python
+python3 PRAC03.py MyDGEMM
 
 unset OMP_NUM_THREADS
-python3 PRAC03.py MyDGEMM
+python3 PRAC03.py MyDGEMM noheader

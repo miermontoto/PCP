@@ -1,0 +1,30 @@
+#!/bin/bash
+results=$(qacct -j -d 7)
+
+# if argument has format "xd", where x is a number, select the last x days
+if [[ $1 =~ ^[0-9]+d$ ]]; then
+    results=$(qacct -j -d ${1%?})
+fi
+
+# if argument is "all", select complete history of jobs
+if [ "$1" == "all" ]; then
+    results=$(qacct -j)
+fi
+
+# return list of users sorted by number of jobs submitted
+users=$(echo "$results" | grep -E "owner" | sort | uniq -c | sort -nr | tr -s ' ' | cut -d ' ' -f 2,4 | head -n 5)
+
+# return list of queues sorted by number of jobs submitted
+queues=$(echo "$results" | grep -E "qname" | sort | uniq -c | sort -nr | tr -s ' ' | cut -d ' ' -f 2,4)
+
+# if "line" in first or second argument, print results in a single line
+if [ "$1" == "line" ] || [ "$2" == "line" ]; then
+    echo -n $users
+    echo -n " | "
+    echo $queues
+else
+    echo "Users:"
+    echo $users
+    echo "Queues:"
+    echo $queues
+fi

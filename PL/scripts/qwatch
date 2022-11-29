@@ -1,0 +1,3 @@
+#!/bin/bash
+# use "watch -n 1" to display current queue status using qstat -u '*' and daily stats using qstats 1d line.
+watch -n 1 "qstats 1d line; echo; qstat -u '*'"

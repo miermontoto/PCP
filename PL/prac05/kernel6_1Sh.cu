@@ -1,4 +1,5 @@
 #include "Prototipos.h"
+#include "Kernels.h"
 
 int main(int argc, char *argv[]) {
 

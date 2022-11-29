@@ -1,0 +1,7 @@
+#!/bin/bash
+for i in $(ls ~/PCP/PL/scripts); do
+    #colorful echo
+    echo -ne "\e[1;32m$i\e[0m "
+    cp ~/PCP/PL/scripts/$i ~/bin
+done
+echo

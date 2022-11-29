@@ -113,7 +113,6 @@ def grabar(vect, xres, yres, output):
     A2D=vect.astype(np.ubyte).reshape(yres,xres) #row-major por defecto
     im=Image.fromarray(A2D)
     im.save(output)
-    #print(f"+{output}")
 
 
 # main
@@ -162,8 +161,3 @@ if __name__ == "__main__":
                 error = "-" if i == 0 else LA.norm(locals()[f"bin{names[i]}"] - locals()[f"bin{names[0]}"])
                 print(f";{error}{f';{binarizationTime:1.5E}' if tiempos else ''}")
                 if debug: grabar(locals()[f"bin{names[i]}"], xres, yres, f"bin_{names[i]}_{size}.bmp")
-
-        with open(f"{size}.done", "w") as f: f.write(time.strftime("%H:%M:%S", time.localtime()))
-
-    # remove all done files
-    for size in sizes: os.remove(f"{size}.done")

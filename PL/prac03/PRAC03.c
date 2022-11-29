@@ -23,24 +23,48 @@ double* transpose(double *A, int m, int n) {
 
 double MyDGEMM(int tipo, int m, int n, int k, double alpha, double* A, int lda, double* B, int ldb, double beta, double* C, int ldc) {
   int i, j, p;
+  double tmp;
+  int i_plus_jldc, jldb;
+  double* At;
 
   if(tipo == TransA) {
-    A = transpose(A, m, k);
+    At = transpose(A, m, k);
   }
 
-  #pragma omp parallel for private(j, p)
-  for(i = 0; i < m; i++) {
-    for(j = 0; j < n; j++) {
-      double tmp = 0.0;
-      for(p = 0; p < k; p++) {
-        double target = A[i + p * lda];
-        if(tipo == TransA || tipo == TransB) {
-          target = A[p + i * ldb];
+  if(tipo > Normal) {
+    int ildb;
+    #pragma omp parallel for private(j, p)
+    for(i = 0; i < m; i++) {
+      ildb = i * ldb;
+
+      for(j = 0; j < n; j++) {
+        i_plus_jldc = i + j * ldc;
+        jldb = j * ldb;
+
+        tmp = 0.0;
+        for(p = 0; p < k; p++) {
+          tmp += At[p + ildb] * B[p + jldb];
         }
-        tmp += target * B[p + j * ldb];
+
+        C[i_plus_jldc] = alpha * tmp + beta * C[i_plus_jldc];
       }
-      C[i + j * ldc] = alpha * tmp + beta * C[i + j * ldc];
     }
+  } else {
+    #pragma omp parallel for private(j, p)
+    for(i = 0; i < m; i++) {
+      for(j = 0; j < n; j++) {
+        i_plus_jldc = i + j * ldc;
+        tmp = 0.0;
+        for(p = 0; p < k; p++) {
+          tmp += A[i + p * lda] * B[p + jldb];
+        }
+        C[i_plus_jldc] = alpha * tmp + beta * C[i_plus_jldc];
+      }
+    }
+  }
+
+  if(tipo == TransA) {
+    free(At);
   }
   return 0.0;
 }

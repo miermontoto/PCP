@@ -1,1 +1,2 @@
+#!/bin/bash
 column $1 -t -s ';'
