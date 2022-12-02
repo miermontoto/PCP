@@ -3,7 +3,8 @@
 
 int mandel_iter(double, double, int);
 
-void mandel(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+// Función normal, con paralelización típica
+void mandel2(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
       double dx = (xmax - xmin) / xres;
       double dy = (ymax - ymin) / yres;
@@ -37,6 +38,51 @@ int mandel_iter(double x, double y, int maxiter) {
       }
 
       return k == maxiter ? 0 : k;
+}
+
+// Función con paralelización utilizando schedule(dynamic, 1)
+// Funciona mejor que schedule(static) y valores más altos de dynamic.
+// Documentar por qué, probar con otros valores de dynamic y con schedule(guided).
+// https://learn.microsoft.com/es-es/cpp/parallel/openmp/d-using-the-schedule-clause
+void mandel(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(dynamic, 1)
+      for (i = 0; i < xres; i++) {
+            c_r = xmin + i * dx;
+            for (j = 0; j < yres; j++) {
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
+            }
+      }
+}
+
+void mandel_tasks(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel
+            #pragma omp single
+            for (i = 0; i < xres; i++) {
+                  c_r = xmin + i * dx;
+
+                  #pragma omp task firstprivate(i) private(j, k, c_im)
+                  for (j = 0; j < yres; j++) {
+                        c_im = ymin + j * dy;
+                        k = mandel_iter(c_r, c_im, maxiter);
+                        A[i + j * xres] = k;
+                  }
+            }
 }
 
 // --- PROMEDIOS --- //
@@ -90,7 +136,7 @@ double promedio_critical(int xres, int yres, double* A) {
 
 // Función con reducción estándar de OpenMP.
 // Para un tamaño de imagen de 4096, el tiempo de ejecución es ≅1.1*10^-2
-double promedio_reduction(int xres, int yres, double* A) {
+double promedio(int xres, int yres, double* A) {
       double sum = 0.0;
       int i, size = xres * yres;
 

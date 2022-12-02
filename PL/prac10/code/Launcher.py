@@ -7,17 +7,18 @@ from numpy import linalg as LA
 from numpy.ctypeslib import ndpointer
 import time
 
-
 debug = "debug" in sys.argv
 binarizar = "binarizar" in sys.argv
 diffs = "diffs" in sys.argv
 tiempos = "tiempos" in sys.argv
 mode = "SECUENCIAL" if os.environ.get("OMP_NUM_THREADS") == '1' else "PARALELO"
+cuda = "tpb" in sys.argv
 
 validCalls = ['mandelProf', 'mandelPy', 'mandelAlumnx']
 assignedNames = ['fractalProf', 'fractalPy', 'fractalAlumnx']
 assignedAverages = ['mediaProf', 'mediaPy', 'mediaAlumnx']
 assignedBinaries = ['binarizaProf', 'binarizaPy', 'binarizaAlumnx']
+functionNames = ['mandel', 'promedio', 'binariza']
 
 calls = []
 names = []
@@ -38,47 +39,62 @@ for i in range(len(validCalls)):
         binaries.remove(assignedBinaries[validCalls.index(sys.argv[i][1:])])
 
 if "sizes" in sys.argv:
-    for i in range(sys.argv.index("sizes"), len(sys.argv)):
+    for i in range(sys.argv.index("sizes") + 1, len(sys.argv)):
         try: sizes.append(int(sys.argv[i]))
-        except: pass
+        except: break
 
 if len(sizes) == 0: sizes.append(4) # marcar error si no se detectan tamaños
 
-# Prepara gestión librería externa de Profesor
-libProf = ctypes.cdll.LoadLibrary('./mandelProf.so')
+if cuda:
+    tpb = int(sys.argv[sys.argv.index("tpb") + 1])
+    mode = "GPU"
+    for i in range(len(functionNames)):
+        functionNames[i] = f"{functionNames[i]}GPU"
+    os.system('make cuda >/dev/null')
+else: os.system('make omp >/dev/null')
 
-mandelProf = libProf.mandel
+# Prepara gestión librería externa de Profesor
+libProf = ctypes.cdll.LoadLibrary("./cuda/mandelProfGPU.so" if cuda else "./openmp/mandelProf.so")
+
+# get libProf.functionNames[0]
+mandelProf = getattr(libProf, functionNames[0])
 mandelProf.restype  = None
 mandelProf.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+if cuda: mandelProf.argtypes.append(ctypes.c_int)
 
-mediaProf = libProf.promedio
+mediaProf = getattr(libProf, functionNames[1])
 mediaProf.restype  = ctypes.c_double
 mediaProf.argtypes = [ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+if cuda: mediaProf.argtypes.append(ctypes.c_int)
 
-binarizaProf = libProf.binariza
+binarizaProf = getattr(libProf, functionNames[2])
 binarizaProf.restype  = None
 binarizaProf.argtypes = [ctypes.c_int, ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), ctypes.c_double]
+if cuda: binarizaProf.argtypes.append(ctypes.c_int)
 
 
 # Preparar gestión librería externa de Alumnx llamada mandelAlumnx.so
-libAlumnx = ctypes.cdll.LoadLibrary('./mandelAlumnx.so')
+libAlumnx = ctypes.cdll.LoadLibrary("./cuda/mandelGPU.so" if cuda else "./openmp/mandelAlumnx.so")
 
-mandelAlumnx = libAlumnx.mandel
+mandelAlumnx = getattr(libAlumnx, functionNames[0])
 mandelAlumnx.restype  = mandelProf.restype
 mandelAlumnx.argtypes = mandelProf.argtypes
+if cuda: mandelAlumnx.argtypes.append(ctypes.c_int)
 
-mediaAlumnx = libAlumnx.promedio_atomic
+mediaAlumnx = getattr(libAlumnx, functionNames[1])
 mediaAlumnx.restype  = mediaProf.restype
 mediaAlumnx.argtypes = mediaProf.argtypes
+if cuda: mediaAlumnx.argtypes.append(ctypes.c_int)
 
-binarizaAlumnx = libAlumnx.binariza
+binarizaAlumnx = getattr(libAlumnx, functionNames[2])
 binarizaAlumnx.restype  = binarizaProf.restype
 binarizaAlumnx.argtypes = binarizaProf.argtypes
+if cuda: binarizaAlumnx.argtypes.append(ctypes.c_int)
 
 
 # Función de cálculo del fractal en Python
 def mandelPy(xmin, ymin, xmax, ymax, maxNoneiter, xres, yres, A):
-    if xres > 2048 or yres > 2048: return
+    if xres > 2048 or yres > 2048: raise Exception("Tamaño de imagen demasiado grande")
 
     dx = (xmax - xmin) / xres
     dy = (ymax - ymin) / yres
@@ -133,19 +149,20 @@ if __name__ == "__main__":
         for name in names: locals()[name] = np.zeros(yres*xres).astype(np.double) # reservar memoria
 
         for i in range(len(calls)):
+            if calls[i] == "mandelPy" and size > 2048: continue
             calcTime = time.time()
-            locals()[calls[i]](xmin, ymin, xmax, ymax, maxiter, xres, yres, locals()[names[i]]) # ejecutar función
+            if cuda: locals()[calls[i]](xmin, ymin, xmax, ymax, maxiter, xres, yres, locals()[names[i]], tpb)
+            else: locals()[calls[i]](xmin, ymin, xmax, ymax, maxiter, xres, yres, locals()[names[i]]) # ejecutar función
             calcTime = time.time() - calcTime
 
             averageTime = time.time()
-            average = locals()[averages[i]](xres, yres, locals()[names[i]]) # calcular promedio
+            if cuda: average = locals()[averages[i]](xres, yres, locals()[names[i]], tpb)
+            else: average = locals()[averages[i]](xres, yres, locals()[names[i]]) # calcular promedio
             averageTime = time.time() - averageTime
-            averageStr = '-' if average == 0.0 else average
 
             error = "-" if i == 0 else LA.norm(locals()[names[i]] - locals()[names[0]]) # calcular error
-            errorStr = '-' if str(average)[0] == '-' else error
 
-            print(f"{calls[i]};{mode};{size};{calcTime};{errorStr};{averageStr}{f';{averageTime:1.5E}' if tiempos else ''}", end="" if binarizar else "\n")
+            print(f"{calls[i]};{mode};{size};{calcTime:1.5E};{error};{average}{f';{averageTime:1.5E}' if tiempos else ''}", end="" if binarizar else "\n")
 
             if debug:
                 grabar(locals()[names[i]], xres, yres, f"{names[i]}_{size}.bmp") # guardar archivo
@@ -155,7 +172,8 @@ if __name__ == "__main__":
                 locals()[f"bin{names[i]}"] = np.copy(locals()[names[i]])
 
                 binarizationTime = time.time()
-                locals()[binaries[i]](yres, xres, locals()[f"bin{names[i]}"], average)
+                if cuda: locals()[binarizations[i]](xres, yres, locals()[f"bin{names[i]}"], average, tpb)
+                else: locals()[binaries[i]](yres, xres, locals()[f"bin{names[i]}"], average)
                 binarizationTime = time.time() - binarizationTime
 
                 error = "-" if i == 0 else LA.norm(locals()[f"bin{names[i]}"] - locals()[f"bin{names[0]}"])

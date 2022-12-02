@@ -1,5 +1,6 @@
 #!/bin/bash
-results=$(qacct -j -d 7)
+results=$(qacct -j)
 
 # return list of unique filenames
 echo "$results" | grep "jobname" | tr -s ' ' | cut -d ' ' -f 2 | sort | uniq
+

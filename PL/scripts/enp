@@ -17,7 +17,7 @@ ColaGPU $1
 echo "Esperando..."
 
 while [ $(qstat | wc -l) -gt 2 ]; do
-    sleep 0.5
+    sleep 2
 done
 
 cat $1.o*
