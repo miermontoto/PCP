@@ -172,6 +172,7 @@ if __name__ == "__main__":
             # binarizar
             if binarizar:
                 binName = f"bin_{name}"
+                binOriginal = f"bin_{original}"
                 locals()[binName] = np.copy(locals()[name]) # copiar imagen para evitar sobreescribirla
 
                 # calcular binarización
@@ -179,7 +180,7 @@ if __name__ == "__main__":
                 else: locals()[binaryFunc](yres, xres, locals()[binName], average)
 
                 # calcular e imprimir error
-                error = LA.norm(locals()[binName] - locals()[f"bin_{original}"])
+                error = "-" if binName == binOriginal else LA.norm(locals()[binName] - locals()[binOriginal])
                 print(f";{error}")
 
                 # guardar binarizado

@@ -1,4 +1,3 @@
-
 #include "PrototiposGPU.h"
 
 __global__ void kernelMandel(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A)
@@ -11,6 +10,7 @@ __global__ void kernelMandel(double xmin, double ymin, double xmax, double ymax,
 	double x, y, u, v, u2, v2;
 	int k;
 
+	
 	x = xmin + i * dx;
 	y = ymin + j * dy;
 
@@ -32,8 +32,22 @@ __global__ void kernelMandel(double xmin, double ymin, double xmax, double ymax,
 
 }
 
-__global__ void kernelBinariza(int xres, int yres, double* A, double med){
+__global__ void kernelBinariza(int xres, int yres, double* A, double med) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
+	if (i < xres && j < yres) {
+		A[i + j * xres] = A[i + j * xres] > med ? 255 : 0;
+	}
+}
+
+__global__ void kernelPromedio(int xres, int yres, double* A) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	int j = blockIdx.y * blockDim.y + threadIdx.y;
+
+	if (i < xres && j < yres) {
+		A[0] += A[i + j * xres];
+	}
 }
 
 extern "C" void mandelGPU(double xmin, double ymin, double xmax, double ymax, int maxk, int xres, int yres, double* A, int ThpBlk) {
@@ -60,7 +74,6 @@ extern "C" double promedioGPU(int xres, int yres, double* A, int ThpBlk) {
 	double sum;
 	double* d_A;
 
-
 	cublasHandle_t handle;
 	if (cublasCreate_v2(&handle) != CUBLAS_STATUS_SUCCESS) {
 		printf("Error al crear el handle de cublas.");
@@ -76,6 +89,37 @@ extern "C" double promedioGPU(int xres, int yres, double* A, int ThpBlk) {
 	return sum / size;
 }
 
-extern "C" void binarizaGPU(int xres, int yres, double* A, double med, int ThpBlk) {
+extern "C" double promedioGPU_kernel(int xres, int yres, double* A, int ThpBlk) {
+	int size = xres * yres * sizeof(double);
+	double* d_A;
 
+	CUDAERR(cudaMalloc((void**) &d_A, size));
+	CUDAERR(cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice));
+
+	dim3 dimBlock(ThpBlk, ThpBlk);
+	dim3 dimGrid((xres + dimBlock.x - 1) / dimBlock.x, (yres + dimBlock.y - 1) / dimBlock.y);
+
+	kernelPromedio<<<dimGrid, dimBlock>>>(xres, yres, d_A);
+	CHECKLASTERR();
+
+	CUDAERR(cudaMemcpy(A, d_A, size, cudaMemcpyDeviceToHost));
+	cudaFree(d_A);
+	return A[0] / size;
+}
+
+extern "C" void binarizaGPU(int xres, int yres, double* A, double med, int ThpBlk) {
+	int size = xres * yres * sizeof(double);
+	double* d_A;
+
+	CUDAERR(cudaMalloc((void**) &d_A, size));
+	CUDAERR(cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice));
+
+	dim3 dimBlock(ThpBlk, ThpBlk);
+	dim3 dimGrid((xres + dimBlock.x - 1) / dimBlock.x, (yres + dimBlock.y - 1) / dimBlock.y);
+
+	kernelBinariza<<<dimGrid, dimBlock>>>(xres, yres, d_A, med);
+	CHECKLASTERR();
+
+	CUDAERR(cudaMemcpy(A, d_A, size, cudaMemcpyDeviceToHost));
+	cudaFree(d_A);
 }
