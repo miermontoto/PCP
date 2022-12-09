@@ -179,7 +179,8 @@ double promedio_vectorization(int xres, int yres, double* A) {
 }
 
 // Versión reduction utilizando un entero para almacenar la suma.
-// Se pierde casi el 50% de rendimiento con respecto a la versión con double.
+// Se pierde casi el 50% de rendimiento con respecto a la versión con double,
+// seguramente por el casting de double a int en cada iteración.
 double promedio_int(int xres, int yres, double* A) {
       int sum = 0;
       int i;

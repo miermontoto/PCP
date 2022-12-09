@@ -129,7 +129,7 @@ if __name__ == "__main__":
     maxiter = int(sys.argv[4])
     ymax = xmax - xmin + ymin
 
-    if not "noheader" in sys.argv: print(f"Function;Mode;Size;Time;Error;Average{f';Bin (err)' if binarizar else ''}")
+    if not "noheader" in sys.argv: print(f"Function;Mode;Size;Time;Error;Average;Average Time{f';Bin (err);Bin Time' if binarizar else ''}")
 
     for size in sizes:
         yres = size
@@ -157,12 +157,14 @@ if __name__ == "__main__":
             calcTime = time.time() - calcTime
 
             # calcular promedio y error
+            averageTime = time.time()
             if cuda: average = locals()[averageFunc](xres, yres, locals()[name], tpb)
             else: average = locals()[averageFunc](xres, yres, locals()[name]) # calcular promedio
+            averageTime = time.time() - averageTime
             error = "-" if original == name else LA.norm(locals()[name] - locals()[original]) # calcular error
 
             # imprimir resultados
-            print(f"{function};{mode};{size};{calcTime:1.5E};{error};{average}", end="" if binarizar else "\n")
+            print(f"{function};{mode};{size};{calcTime:1.5E};{error};{average};{averageTime:1.5E}", end="" if binarizar else "\n")
 
             # guardar imágenes
             if debug:
@@ -176,12 +178,14 @@ if __name__ == "__main__":
                 locals()[binName] = np.copy(locals()[name]) # copiar imagen para evitar sobreescribirla
 
                 # calcular binarización
+                binarizaTime = time.time()
                 if cuda: locals()[binaryFunc](xres, yres, locals()[binName], average, tpb)
                 else: locals()[binaryFunc](yres, xres, locals()[binName], average)
+                binarizaTime = time.time() - binarizaTime
 
                 # calcular e imprimir error
                 error = "-" if binName == binOriginal else LA.norm(locals()[binName] - locals()[binOriginal])
-                print(f";{error}")
+                print(f";{error};{binarizaTime:1.5E}")
 
                 # guardar binarizado
                 if debug: grabar(locals()[binName], xres, yres, f"{binName}_{size}.bmp")
