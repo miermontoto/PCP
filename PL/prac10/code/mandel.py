@@ -1,5 +1,7 @@
+import numpy as np
+
 # Función de cálculo del fractal en Python
-def mandelPy(xmin, ymin, xmax, ymax, maxNoneiter, xres, yres, A):
+def mandelPy(xmin, ymin, xmax, ymax, maxiter, xres, yres, A):
     if xres > 2048 or yres > 2048: raise Exception("Tamaño de imagen demasiado grande")
 
     dx = (xmax - xmin) / xres
@@ -32,6 +34,6 @@ def diffImage(vect1, vect2):
 
 
 def grabar(vect, xres, yres, output):
-    A2D=vect.astype(np.ubyte).reshape(yres,xres) #row-major por defecto
+    A2D=vect.astype(np.ubyte).reshape(yres,xres) # row-major por defecto
     im=Image.fromarray(A2D)
     im.save(output)

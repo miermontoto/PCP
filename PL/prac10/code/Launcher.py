@@ -56,7 +56,7 @@ validCalls = {
         'function': 'mandelProf',
         'name': 'fractalProf',
         'average': 'mediaProf',
-        'binary': 'binarizaProf',
+        'binary': 'binarizaProf'
     },
     'py': {
         'function': 'mandelPy',
@@ -170,6 +170,8 @@ if __name__ == "__main__":
             binaryFunc = call['binary']
             original = calls[0]['name']
 
+            checkCuda = cuda and not "Py" in function
+
             # Como indicado en clase, tamaños superiores a 2048 suponen un calculo
             # demasiado largo y no son útiles para la práctica.
             # Para poder enviar todos los tamaños en una sola ejecución, se comprueba
@@ -180,13 +182,13 @@ if __name__ == "__main__":
 
             # ejecutar función
             calcTime = time.time()
-            if cuda: locals()[function](xmin, ymin, xmax, ymax, maxiter, xres, yres, locals()[name], tpb)
+            if checkCuda: locals()[function](xmin, ymin, xmax, ymax, maxiter, xres, yres, locals()[name], tpb)
             else: locals()[function](xmin, ymin, xmax, ymax, maxiter, xres, yres, locals()[name])
             calcTime = time.time() - calcTime
 
             # calcular promedio y error
             averageTime = time.time()
-            if cuda: average = locals()[averageFunc](xres, yres, locals()[name], tpb)
+            if checkCuda: average = locals()[averageFunc](xres, yres, locals()[name], tpb)
             else: average = locals()[averageFunc](xres, yres, locals()[name]) # calcular promedio
             averageTime = time.time() - averageTime
             error = "-" if original == name else LA.norm(locals()[name] - locals()[original]) # calcular error
@@ -207,7 +209,7 @@ if __name__ == "__main__":
 
                 # calcular binarización
                 binarizaTime = time.time()
-                if cuda: locals()[binaryFunc](xres, yres, locals()[binName], average, tpb)
+                if checkCuda: locals()[binaryFunc](xres, yres, locals()[binName], average, tpb)
                 else: locals()[binaryFunc](yres, xres, locals()[binName], average)
                 binarizaTime = time.time() - binarizaTime
 
