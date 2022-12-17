@@ -76,14 +76,17 @@ __global__ void kernelPromedio_getBlocksValue(int xres, int yres, double* A, dou
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 	int cacheIndex = threadIdx.x;
 
+	// Cada hilo calcula su suma.
 	double temp = 0;
 	while (tid < xres * yres) {
 		temp += A[tid];
 		tid += blockDim.x * gridDim.x;
 	}
-	cache[cacheIndex] = temp;
+	cache[cacheIndex] = temp; // Se guarda la suma de cada hilo en memoria compartida.
+
 	__syncthreads();
 
+	// Se reduce y se obtiene la suma de cada bloque.
 	int i = blockDim.x / 2;
 	while (i != 0) {
 		if (cacheIndex < i) {
@@ -93,8 +96,8 @@ __global__ void kernelPromedio_getBlocksValue(int xres, int yres, double* A, dou
 		i /= 2;
 	}
 
-	if (cacheIndex == 0) {
-		b_sum[blockIdx.x] = cache[0];
+	if (cacheIndex == 0) { // Un solo hilo:
+		b_sum[blockIdx.x] = cache[0]; // almacena la suma total de cada bloque.
 	}
 }
 
@@ -134,7 +137,7 @@ extern "C" int mandel_iter(double x, double y, int maxiter) {
 }
 
 // Función similar a mandelGPU, pero la CPU realiza el 10% del cálculo y el 90% lo realiza la GPU.
-extern "C" void mandelGPU(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A, int ThpBlk) {
+extern "C" void mandelGPU_heter(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A, int ThpBlk) {
 	int size = xres * yres * sizeof(double);
 	double* d_A;
 
@@ -144,6 +147,13 @@ extern "C" void mandelGPU(double xmin, double ymin, double xmax, double ymax, in
 	dim3 dimGrid((xres * 0.9 + dimBlock.x - 1) / dimBlock.x, (yres + dimBlock.y - 1) / dimBlock.y);
 
 	kernelMandel<<<dimGrid, dimBlock>>>(xmin, ymin, xmax, ymax, maxiter, xres * 0.9, yres, d_A);
+
+	// Se realiza el 10% restante de cálculo en la CPU.
+	for (int i = xres * 0.9; i < xres; i++) {
+		for (int j = 0; j < yres; j++) {
+			d_A[i * yres + j] = mandel_iter(xmin + (xmax - xmin) * i / xres, ymin + (ymax - ymin) * j / yres, maxiter);
+		}
+	}
 
 	CHECKLASTERR();
 
@@ -215,7 +225,8 @@ extern "C" double promedioGPU_api(int xres, int yres, double* A, int ThpBlk) {
 	return sum / size;
 }
 
-
+// Función promedio con Shared Memory.
+// Inspirado en el Problema X de las PAs.
 extern "C" double promedioGPU(int xres, int yres, double* A, int ThpBlk) {
 	int size = xres * yres * sizeof(double);
 	double* d_A;

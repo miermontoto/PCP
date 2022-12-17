@@ -2,3 +2,4 @@
 LIBS
 .vscode
 *.code-workspace
+__pycache__

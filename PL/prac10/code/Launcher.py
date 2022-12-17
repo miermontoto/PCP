@@ -6,6 +6,7 @@ import ctypes
 import numpy as np
 from numpy.ctypeslib import ndpointer
 from numpy import linalg as LA
+from mandel import *
 
 debug = "debug" in sys.argv
 binarizar = "bin" in sys.argv
@@ -13,12 +14,49 @@ diffs = "diffs" in sys.argv
 mode = "SECUENCIAL" if os.environ.get("OMP_NUM_THREADS") == '1' else "PARALELO"
 cuda = "tpb" in sys.argv
 
+if cuda:
+    tpb = int(sys.argv[sys.argv.index("tpb") + 1])
+    mode = "GPU"
+    os.system('make cuda >/dev/null')
+else: os.system('make omp >/dev/null')
+
+translated = 'cuda' if cuda else 'openmp'
+
+validFunctions = {
+    'openmp': {
+        'mandel': {
+            'normal': 'mandel_normal',
+            'tasks': 'mandel_tasks',
+            'schedule': 'mandel_schedule',
+        },
+        'promedio': {
+            'normal': 'promedio_normal',
+            'atomic': 'promedio_atomic',
+            'critical': 'promedio_critical',
+            'vect': 'promedio_vect',
+            'int': 'promedio_int'
+        }
+    },
+    'cuda': {
+        'mandel': {
+            'normal': 'mandelGPU_normal',
+            'heter': 'mandelGPU_heter',
+            'unified': 'mandelGPU_unified',
+            'pinned': 'mandelGPU_pinned'
+        },
+        'promedio': {
+            'api': 'promedioGPU_api',
+            'shared': 'promedioGPU_shared'
+        }
+    }
+}
+
 validCalls = {
     'prof': {
         'function': 'mandelProf',
         'name': 'fractalProf',
         'average': 'mediaProf',
-        'binary': 'binarizaProf'
+        'binary': 'binarizaProf',
     },
     'py': {
         'function': 'mandelPy',
@@ -26,12 +64,7 @@ validCalls = {
         'average': 'mediaPy',
         'binary': 'binarizaPy'
     },
-    'own': {
-        'function': 'mandelAlumnx',
-        'name': 'fractalAlumnx',
-        'average': 'mediaAlumnx',
-        'binary': 'binarizaAlumnx'
-    }
+    'own': {}
 }
 
 calls = []
@@ -39,7 +72,37 @@ sizes = []
 
 for key in list(validCalls.keys()):
     if key in sys.argv:
-        calls.append(validCalls.get(key))
+        if key == 'own':
+            targetAverage = next(iter(validFunctions[translated]['promedio'].values()))
+            if "average" in sys.argv and sys.argv[sys.argv.index("average") + 1] in validFunctions[translated]['promedio']:
+                targetAverage = validFunctions[translated]['promedio'][sys.argv[sys.argv.index("average") + 1]]
+
+            if "methods" in sys.argv:
+                if "all" == sys.argv[sys.argv.index("methods") + 1]:
+                    for key, value in validFunctions[translated]['mandel'].items():
+                        calls.append({
+                            'function': value,
+                            'name': f'fractalAlumnx{key.capitalize()}',
+                            'average': targetAverage,
+                            'binary': 'binarizaAlumnx'
+                        })
+                else:
+                    for i in range(sys.argv.index("methods") + 1, len(sys.argv)):
+                        if sys.argv[i] in validFunctions[translated]['mandel']:
+                            calls.append({
+                                'function': validFunctions[translated]['mandel'][sys.argv[i]],
+                                'name': f'fractalAlumnx{sys.argv[i].capitalize()}',
+                                'average': targetAverage,
+                                'binary': 'binarizaAlumnx'
+                            })
+                        else: break
+            else: calls.append({
+                'function': next(iter(validFunctions[translated]['mandel'].values())),
+                'name': 'fractalAlumnx',
+                'average': targetAverage,
+                'binary': 'binarizaAlumnx'
+            })
+        else: calls.append(validCalls.get(key))
     elif f"-{key}" in sys.argv and validCalls.get(key) in calls:
         calls.remove(validCalls.get(key))
 
@@ -49,12 +112,6 @@ if "sizes" in sys.argv:
         except: break
 
 if len(sizes) == 0: sizes.append(4) # marcar error si no se detectan tamaños
-
-if cuda:
-    tpb = int(sys.argv[sys.argv.index("tpb") + 1])
-    mode = "GPU"
-    os.system('make cuda >/dev/null')
-else: os.system('make omp >/dev/null')
 
 functions = {
     'mandel': {
@@ -78,49 +135,20 @@ owners = ['Prof', 'Alumnx']
 for owner in owners:
     lib = ctypes.cdll.LoadLibrary(f"./{'cuda' if cuda else 'openmp'}/mandel{owner}{'GPU' if cuda else ''}.so")
     for key, value in functions.items():
+        if owner == 'Alumnx' and (key == 'mandel' or key == 'media'): continue
         locals()[f"{key}{owner}"] = getattr(lib, f"{value['name']}{'GPU' if cuda else ''}")
         locals()[f"{key}{owner}"].restype = value['restype']
         locals()[f"{key}{owner}"].argtypes = value['argtypes']
 
-
-# Función de cálculo del fractal en Python
-def mandelPy(xmin, ymin, xmax, ymax, maxNoneiter, xres, yres, A):
-    if xres > 2048 or yres > 2048: raise Exception("Tamaño de imagen demasiado grande")
-
-    dx = (xmax - xmin) / xres
-    dy = (ymax - ymin) / yres
-
-    for i in range(xres):
-        for j in range(yres):
-            c = complex(xmin + i * dx, ymin + j * dy)
-            z = complex(0, 0)
-
-            k = 1
-            while k < maxiter and abs(z) < 2:
-                z = z*z + c
-                k += 1
-            A[i + j * xres] = 0 if k >= maxiter else k
-
-def mediaPy(xres, yres, A):
-    return np.mean(A)
-
-def binarizaPy(xres, yres, A, average):
-    for i in range(len(A)):
-        A[i] = 0 if A[i] < average else 255
-
-# otras funciones auxiliares
-def diffImage(vect1, vect2):
-    vectResult = np.zeros(vect1.shape)
-    for i in range(len(vect1)):
-        vectResult[i] = 255 if vect1[i] != vect2[i] else 0
-    return vectResult
-
-
-def grabar(vect, xres, yres, output):
-    A2D=vect.astype(np.ubyte).reshape(yres,xres) #row-major por defecto
-    im=Image.fromarray(A2D)
-    im.save(output)
-
+    if owner == "Alumnx":
+        for call in calls:
+            if "Prof" in call['function'] or "Py" in call['function']: continue
+            locals()[f"{call['function']}"] = getattr(lib, call['function'])
+            locals()[f"{call['function']}"].restype = functions['mandel']['restype']
+            locals()[f"{call['function']}"].argtypes = functions['mandel']['argtypes']
+            locals()[f"{call['average']}"] = getattr(lib, call['average'])
+            locals()[f"{call['average']}"].restype = functions['media']['restype']
+            locals()[f"{call['average']}"].argtypes = functions['media']['argtypes']
 
 if __name__ == "__main__":
     xmin = float(sys.argv[1])
@@ -129,7 +157,7 @@ if __name__ == "__main__":
     maxiter = int(sys.argv[4])
     ymax = xmax - xmin + ymin
 
-    if not "noheader" in sys.argv: print(f"Function;Mode;Size;Time;Error;Average;Average Time{f';Bin (err);Bin Time' if binarizar else ''}")
+    if not "noheader" in sys.argv: print(f"Function;Mode;Size;{'TPB;' if cuda else ''}Time;Error;Average;Average Time{f';Bin (err);Bin Time' if binarizar else ''}")
 
     for size in sizes:
         yres = size
@@ -164,7 +192,7 @@ if __name__ == "__main__":
             error = "-" if original == name else LA.norm(locals()[name] - locals()[original]) # calcular error
 
             # imprimir resultados
-            print(f"{function};{mode};{size};{calcTime:1.5E};{error};{average};{averageTime:1.5E}", end="" if binarizar else "\n")
+            print(f"{function};{mode};{size};{f'{tpb};' if cuda else ''}{calcTime:1.5E};{error};{average};{averageTime:1.5E}", end="" if binarizar else "\n")
 
             # guardar imágenes
             if debug:

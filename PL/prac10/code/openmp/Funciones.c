@@ -4,7 +4,7 @@
 int mandel_iter(double, double, int);
 
 // Función normal, con paralelización típica
-void mandel2(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+void mandel_normal(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
       double dx = (xmax - xmin) / xres;
       double dy = (ymax - ymin) / yres;
@@ -44,7 +44,7 @@ int mandel_iter(double x, double y, int maxiter) {
 // Funciona mejor que schedule(static) y valores más altos de dynamic.
 // Documentar por qué, probar con otros valores de dynamic y con schedule(guided).
 // https://learn.microsoft.com/es-es/cpp/parallel/openmp/d-using-the-schedule-clause
-void mandel(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+void mandel_schedule(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
       double dx = (xmax - xmin) / xres;
       double dy = (ymax - ymin) / yres;
@@ -136,7 +136,7 @@ double promedio_critical(int xres, int yres, double* A) {
 
 // Función con reducción estándar de OpenMP.
 // Para un tamaño de imagen de 4096, el tiempo de ejecución es ≅1.1*10^-2
-double promedio(int xres, int yres, double* A) {
+double promedio_normal(int xres, int yres, double* A) {
       double sum = 0.0;
       int i, size = xres * yres;
 
@@ -150,7 +150,7 @@ double promedio(int xres, int yres, double* A) {
 // Función de promedio que utiliza vectorización para eliminar la sobrecarga de atomic y reduction.
 // https://coderwall.com/p/gocbhg/openmp-improve-reduction-techniques
 // Se consigue mejor rendimiento con master que con single.
-double promedio_vectorization(int xres, int yres, double* A) {
+double promedio_vect(int xres, int yres, double* A) {
       double partialSum, totalSum = 0.0;
       double *vect;
       int hilos, i, size = xres * yres;
