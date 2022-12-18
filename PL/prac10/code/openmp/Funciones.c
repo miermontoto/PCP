@@ -1,7 +1,70 @@
 #include "Prototipos.h"
 #include <omp.h>
+#include <xmmintrin.h>
 
-int mandel_iter(double, double, int);
+int mandel_iter_while(double x, double y, int maxiter) {
+
+      double u = 0.0, v = 0.0;
+      double u2 = 0.0, v2 = 0.0;
+
+      int k = 1;
+      while (k < maxiter && u2 + v2 < 4.0) {
+         v = 2.0 * u * v + y;
+         u = u2 - v2 + x;
+         u2 = u * u;
+         v2 = v * v;
+         k++;
+      }
+
+      return k == maxiter ? 0 : k;
+}
+
+int mandel_iter_for(double x, double y, int maxiter) {
+
+      double u = 0.0, v = 0.0;
+      double u2 = 0.0, v2 = 0.0;
+
+      int k;
+      for (k = 1; k < maxiter; k++) {
+            v = 2.0 * u * v + y;
+            u = u2 - v2 + x;
+            u2 = u * u;
+            v2 = v * v;
+
+            if (u2 + v2 >= 4.0) {
+                  return k;
+            }
+      }
+
+      return maxiter;
+}
+
+int mandel_iter_simd(double x, double y, int maxiter) {
+
+      __m128 zero = _mm_set_ps(0.0, 0.0, 0.0, 0.0);
+      __m128 two = _mm_set_ps(2.0, 2.0, 2.0, 2.0);
+      __m128 four = _mm_set_ps(4.0, 4.0, 4.0, 4.0);
+
+      __m128 u = zero;
+      __m128 v = zero;
+      __m128 u2 = zero;
+      __m128 v2 = zero;
+
+      int k;
+      for (k = 1; k < maxiter; k++) {
+            v = _mm_add_ps(_mm_mul_ps(two, _mm_mul_ps(u, v)), _mm_set_ps(y, y, y, y));
+            u = _mm_add_ps(_mm_sub_ps(u2, v2), _mm_set_ps(x, x, x, x));
+            u2 = _mm_mul_ps(u, u);
+            v2 = _mm_mul_ps(v, v);
+
+            __m128 uv_sum = _mm_add_ps(u2, v2);
+            if (_mm_movemask_ps(_mm_cmpge_ps(uv_sum, four)) != 0) {
+                  return k;
+            }
+      }
+
+      return maxiter;
+}
 
 // Función normal, con paralelización típica
 void mandel_normal(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
@@ -21,23 +84,6 @@ void mandel_normal(double xmin, double ymin, double xmax, double ymax, int maxit
                   A[i + j * xres] = k;
             }
       }
-}
-
-int mandel_iter(double x, double y, int maxiter) {
-
-      double u = 0.0, v = 0.0;
-      double u2 = 0.0, v2 = 0.0;
-
-      int k = 1;
-      while (k < maxiter && u2 + v2 < 4.0) {
-         v = 2.0 * u * v + y;
-         u = u2 - v2 + x;
-         u2 = u * u;
-         v2 = v * v;
-         k++;
-      }
-
-      return k == maxiter ? 0 : k;
 }
 
 // Función con paralelización utilizando schedule(dynamic, 1)

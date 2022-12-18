@@ -167,7 +167,7 @@ if __name__ == "__main__":
     maxiter = int(sys.argv[4])
     ymax = xmax - xmin + ymin
 
-    if not "noheader" in sys.argv: print(f"Function;Mode;Size;{'TPB;' if cuda else ''}Time;Error;Average;{'Average Time' if times else ''}{f';Bin (err);Bin Time' if binarizar else ''}")
+    if not "noheader" in sys.argv: print(f"Function;Mode;Size;{'TPB;' if cuda else ''}Time;Error;Average{';Average Time' if times else ''}{';Bin (err)' if binarizar else ''}{';Bin Time' if binarizar and times else ''}")
 
     for size in sizes:
         yres = size
@@ -227,7 +227,7 @@ if __name__ == "__main__":
 
                 # calcular e imprimir error
                 error = "-" if binName == binOriginal else LA.norm(locals()[binName] - locals()[binOriginal])
-                print(f";{error};{binarizaTime:1.5E}")
+                print(f";{error};{f'{binarizaTime:1.5E}' if times else ''}")
 
                 # guardar binarizado
                 if debug: grabar(locals()[binName], xres, yres, f"{binName}_{size}.bmp")
