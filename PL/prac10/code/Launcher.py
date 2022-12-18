@@ -34,6 +34,8 @@ validFunctions = {
             'schedule_auto': 'mandel_schedule_auto',
             'schedule_static': 'mandel_schedule_static',
             'schedule_guided': 'mandel_schedule_guided',
+            'schedule_runtime': 'mandel_schedule_runtime',
+            'schedule_dynamic': 'mandel_schedule_dynamic',
             'schedule_dynamic1': 'mandel_schedule_dynamic1',
             'schedule_dynamic32': 'mandel_schedule_dynamic32',
             'schedule_dynamic256': 'mandel_schedule_dynamic256',

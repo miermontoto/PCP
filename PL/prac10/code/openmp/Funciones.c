@@ -2,6 +2,7 @@
 #include <omp.h>
 #include <xmmintrin.h>
 
+// --- ALGORITMOS DE TIEMPO DE ESCAPE ---
 int mandel_iter_while(double x, double y, int maxiter) {
 
       double u = 0.0, v = 0.0;
@@ -19,7 +20,7 @@ int mandel_iter_while(double x, double y, int maxiter) {
       return k == maxiter ? 0 : k;
 }
 
-int mandel_iter_for(double x, double y, int maxiter) {
+int mandel_iter(double x, double y, int maxiter) {
 
       double u = 0.0, v = 0.0;
       double u2 = 0.0, v2 = 0.0;
@@ -66,6 +67,7 @@ int mandel_iter_simd(double x, double y, int maxiter) {
       return maxiter;
 }
 
+// --- FUNCIONES MANDEL ---
 // Función normal, con paralelización típica
 void mandel_normal(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
@@ -86,10 +88,44 @@ void mandel_normal(double xmin, double ymin, double xmax, double ymax, int maxit
       }
 }
 
-// Función con paralelización utilizando schedule(dynamic, 1)
-// Funciona mejor que schedule(static) y valores más altos de dynamic.
-// Documentar por qué, probar con otros valores de dynamic y con schedule(guided).
-// https://learn.microsoft.com/es-es/cpp/parallel/openmp/d-using-the-schedule-clause
+void mandel_schedule_runtime(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(runtime)
+      for (i = 0; i < xres; i++) {
+            c_r = xmin + i * dx;
+            for (j = 0; j < yres; j++) {
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
+            }
+      }
+}
+
+void mandel_schedule_dynamic(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(dynamic)
+      for (i = 0; i < xres; i++) {
+            c_r = xmin + i * dx;
+            for (j = 0; j < yres; j++) {
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
+            }
+      }
+}
+
 void mandel_schedule_dynamic1(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
       double dx = (xmax - xmin) / xres;
