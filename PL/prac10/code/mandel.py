@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 
 # Función de cálculo del fractal en Python
 def mandelPy(xmin, ymin, xmax, ymax, maxiter, xres, yres, A):

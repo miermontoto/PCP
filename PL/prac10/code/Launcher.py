@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-from PIL import Image
 import ctypes
 import numpy as np
 from numpy.ctypeslib import ndpointer
@@ -11,23 +10,36 @@ from mandel import *
 debug = "debug" in sys.argv
 binarizar = "bin" in sys.argv
 diffs = "diffs" in sys.argv
-mode = "SECUENCIAL" if os.environ.get("OMP_NUM_THREADS") == '1' else "PARALELO"
-cuda = "tpb" in sys.argv
+times = "times" in sys.argv
 
-if cuda:
-    tpb = int(sys.argv[sys.argv.index("tpb") + 1])
+if "tpb" in sys.argv: # Detección de modo CUDA
+    try: tpb = int(sys.argv[sys.argv.index("tpb") + 1])
+    except:
+        tpb = 32
+        print("Error al obtener el número de hilos por bloque, se utiliza valor por defecto (32)")
     mode = "GPU"
-    os.system('make cuda >/dev/null')
-else: os.system('make omp >/dev/null')
+    cuda = True
+    translated = 'cuda'
+else:
+    mode = "SECUENCIAL" if os.environ.get("OMP_NUM_THREADS") == '1' else "PARALELO"
+    cuda = False
+    translated = 'omp'
 
-translated = 'cuda' if cuda else 'openmp'
+os.system(f"make {translated} >/dev/null") # Se ignoran los mensajes pero no los errores
 
 validFunctions = {
-    'openmp': {
+    'omp': {
         'mandel': {
             'normal': 'mandel_normal',
-            'tasks': 'mandel_tasks',
-            'schedule': 'mandel_schedule',
+            'schedule_auto': 'mandel_schedule_auto',
+            'schedule_static': 'mandel_schedule_static',
+            'schedule_guided': 'mandel_schedule_guided',
+            'schedule_runtime': 'mandel_schedule_runtime',
+            'schedule_dynamic': 'mandel_schedule_dynamic',
+            'schedule_dynamic1': 'mandel_schedule_dynamic1',
+            'schedule_dynamic32': 'mandel_schedule_dynamic32',
+            'schedule_dynamic256': 'mandel_schedule_dynamic256',
+            'schedule_dynamic1024': 'mandel_schedule_dynamic1024',
         },
         'promedio': {
             'normal': 'promedio_normal',
@@ -157,7 +169,7 @@ if __name__ == "__main__":
     maxiter = int(sys.argv[4])
     ymax = xmax - xmin + ymin
 
-    if not "noheader" in sys.argv: print(f"Function;Mode;Size;{'TPB;' if cuda else ''}Time;Error;Average;Average Time{f';Bin (err);Bin Time' if binarizar else ''}")
+    if not "noheader" in sys.argv: print(f"Function;Mode;Size;{'TPB;' if cuda else ''}Time;Error;Average{';Average Time' if times else ''}{';Bin (err)' if binarizar else ''}{';Bin Time' if binarizar and times else ''}")
 
     for size in sizes:
         yres = size
@@ -193,8 +205,10 @@ if __name__ == "__main__":
             averageTime = time.time() - averageTime
             error = "-" if original == name else LA.norm(locals()[name] - locals()[original]) # calcular error
 
+            if cuda: tpbStr = "-" if "Py" in function else tpb
+
             # imprimir resultados
-            print(f"{function};{mode};{size};{f'{tpb};' if cuda else ''}{calcTime:1.5E};{error};{average};{averageTime:1.5E}", end="" if binarizar else "\n")
+            print(f"{function};{mode};{size};{f'{tpbStr};' if cuda else ''}{calcTime:1.5E};{error};{average};{f'{averageTime:1.5E}' if times else ''}", end="" if binarizar else "\n")
 
             # guardar imágenes
             if debug:
@@ -215,7 +229,7 @@ if __name__ == "__main__":
 
                 # calcular e imprimir error
                 error = "-" if binName == binOriginal else LA.norm(locals()[binName] - locals()[binOriginal])
-                print(f";{error};{binarizaTime:1.5E}")
+                print(f";{error};{f'{binarizaTime:1.5E}' if times else ''}")
 
                 # guardar binarizado
                 if debug: grabar(locals()[binName], xres, yres, f"{binName}_{size}.bmp")

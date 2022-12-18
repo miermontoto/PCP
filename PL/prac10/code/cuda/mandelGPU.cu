@@ -227,7 +227,7 @@ extern "C" double promedioGPU_api(int xres, int yres, double* A, int ThpBlk) {
 
 // Función promedio con Shared Memory.
 // Inspirado en el Problema X de las PAs.
-extern "C" double promedioGPU(int xres, int yres, double* A, int ThpBlk) {
+extern "C" double promedioGPU_shared(int xres, int yres, double* A, int ThpBlk) {
 	int size = xres * yres * sizeof(double);
 	double* d_A;
 	double h_sum, *d_sum, *b_sum;
