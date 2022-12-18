@@ -49,6 +49,7 @@
     - [x] Lectura de parámetros de GPU
     - [x] Llamadas a CUDA
     - [x] Combinar con launcher original (prac4)
+    - [x] Ejecución de múltiples funciones por librería alumnx.
     - [ ] Arreglar launcher de promedios
 - [ ] Código CUDA
 - [x] Makefiles

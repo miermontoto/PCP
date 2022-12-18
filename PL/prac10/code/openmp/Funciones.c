@@ -44,7 +44,7 @@ int mandel_iter(double x, double y, int maxiter) {
 // Funciona mejor que schedule(static) y valores más altos de dynamic.
 // Documentar por qué, probar con otros valores de dynamic y con schedule(guided).
 // https://learn.microsoft.com/es-es/cpp/parallel/openmp/d-using-the-schedule-clause
-void mandel_schedule(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+void mandel_schedule_dynamic1(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
       double dx = (xmax - xmin) / xres;
       double dy = (ymax - ymin) / yres;
@@ -63,7 +63,7 @@ void mandel_schedule(double xmin, double ymin, double xmax, double ymax, int max
       }
 }
 
-void mandel_tasks(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+void mandel_schedule_static(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
       double dx = (xmax - xmin) / xres;
       double dy = (ymax - ymin) / yres;
@@ -71,18 +71,110 @@ void mandel_tasks(double xmin, double ymin, double xmax, double ymax, int maxite
       double c_r, c_im;
 
       int i, j, k;
-      #pragma omp parallel
-            #pragma omp single
-            for (i = 0; i < xres; i++) {
-                  c_r = xmin + i * dx;
-
-                  #pragma omp task firstprivate(i) private(j, k, c_im)
-                  for (j = 0; j < yres; j++) {
-                        c_im = ymin + j * dy;
-                        k = mandel_iter(c_r, c_im, maxiter);
-                        A[i + j * xres] = k;
-                  }
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(static)
+      for (i = 0; i < xres; i++) {
+            c_r = xmin + i * dx;
+            for (j = 0; j < yres; j++) {
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
             }
+      }
+}
+
+void mandel_schedule_guided(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(guided)
+      for (i = 0; i < xres; i++) {
+            c_r = xmin + i * dx;
+            for (j = 0; j < yres; j++) {
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
+            }
+      }
+}
+
+void mandel_schedule_dynamic32(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(dynamic, 32)
+      for (i = 0; i < xres; i++) {
+            c_r = xmin + i * dx;
+            for (j = 0; j < yres; j++) {
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
+            }
+      }
+}
+
+void mandel_schedule_dynamic256(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(dynamic, 256)
+      for (i = 0; i < xres; i++) {
+            c_r = xmin + i * dx;
+            for (j = 0; j < yres; j++) {
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
+            }
+      }
+}
+
+void mandel_schedule_dynamic1024(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(dynamic, 1024)
+      for (i = 0; i < xres; i++) {
+            c_r = xmin + i * dx;
+            for (j = 0; j < yres; j++) {
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
+            }
+      }
+}
+
+void mandel_schedule_auto(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(auto)
+      for (i = 0; i < xres; i++) {
+            c_r = xmin + i * dx;
+            for (j = 0; j < yres; j++) {
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
+            }
+      }
 }
 
 // --- PROMEDIOS --- //
@@ -192,8 +284,6 @@ double promedio_int(int xres, int yres, double* A) {
       }
       return sum / (double) size;
 }
-
-// no se puede implementar una función promedio_simd ya que la versión de OpenMP (201107) no soporta la directiva.
 
 // --- BINARIZADOS --- //
 
