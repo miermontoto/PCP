@@ -37,7 +37,7 @@ int mandel_iter_for(double x, double y, int maxiter) {
             }
       }
 
-      return maxiter;
+      return 0;
 }
 
 int mandel_iter_simd(double x, double y, int maxiter) {
@@ -88,6 +88,25 @@ void mandel_normal(double xmin, double ymin, double xmax, double ymax, int maxit
       }
 }
 
+void mandel_collapse(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) collapse(2)
+      for (i = 0; i < xres; i++) {
+            for (j = 0; j < yres; j++) {
+                  c_r = xmin + i * dx;
+                  c_im = ymin + j * dy;
+                  k = mandel_iter(c_r, c_im, maxiter);
+                  A[i + j * xres] = k;
+            }
+      }
+}
+
 void mandel_tasks(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
       double dx = (xmax - xmin) / xres;
       double dy = (ymax - ymin) / yres;
@@ -108,25 +127,6 @@ void mandel_tasks(double xmin, double ymin, double xmax, double ymax, int maxite
                         }
                   }
             }
-}
-
-void mandel_schedule_runtime(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
-
-      double dx = (xmax - xmin) / xres;
-      double dy = (ymax - ymin) / yres;
-
-      double c_r, c_im;
-
-      int i, j, k;
-      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(runtime)
-      for (i = 0; i < xres; i++) {
-            c_r = xmin + i * dx;
-            for (j = 0; j < yres; j++) {
-                  c_im = ymin + j * dy;
-                  k = mandel_iter(c_r, c_im, maxiter);
-                  A[i + j * xres] = k;
-            }
-      }
 }
 
 void mandel_schedule_dynamic(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
@@ -224,7 +224,7 @@ double promedio_atomic(int xres, int yres, double* A) {
                   partialSum += A[i];
             }
 
-            #pragma omp atomic
+            #pragma omp atomic update
             totalSum += partialSum;
       }
 
@@ -314,12 +314,11 @@ double promedio_int(int xres, int yres, double* A) {
 }
 
 // Versión promedio con schedule estático para tratar de evitar false sharing.
-// El valor de chunk_size óptimo es 8, que es el tamaño de caché de nivel 1.
 double promedio_schedule(int xres, int yres, double* A) {
       double sum = 0.0;
       int i, size = xres * yres;
 
-      #pragma omp parallel for reduction(+:sum) schedule(static, 8)
+      #pragma omp parallel for reduction(+:sum) schedule(static, 16)
       for (i = 0; i < size; i++) {
             sum += A[i];
       }

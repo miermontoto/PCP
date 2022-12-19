@@ -32,11 +32,11 @@ validFunctions = {
     'omp': {
         'mandel': {
             'normal': 'mandel_normal',
+            'collapse': 'mandel_collapse',
             'tasks': 'mandel_tasks',
             'schedule_auto': 'mandel_schedule_auto',
             'schedule_static': 'mandel_schedule_static',
             'schedule_guided': 'mandel_schedule_guided',
-            'schedule_runtime': 'mandel_schedule_runtime',
             'schedule_dynamic': 'mandel_schedule_dynamic'
         },
         'promedio': {
@@ -126,7 +126,7 @@ for key in list(validCalls.keys()):
                         'binary': 'binarizaAlumnx'
                     })
         else: calls.append(validCalls.get(key))
-    elif f"-{key}" in sys.argv and validCalls.get(key) in calls:
+    elif f"-{key}" in sys.argv:
         calls.remove(validCalls.get(key))
 
 if "sizes" in sys.argv:
@@ -209,7 +209,7 @@ if __name__ == "__main__":
             # demasiado largo y no son útiles para la práctica.
             # Para poder enviar todos los tamaños en una sola ejecución, se comprueba
             # el tamaño aquí.
-            if function == "mandelPy" and size > 2048: continue
+            if "Py" in function or "Py" in name and size > 2048: continue
 
             locals()[name] = np.zeros(yres*xres).astype(np.double) # reservar memoria
 
@@ -224,7 +224,8 @@ if __name__ == "__main__":
             if checkCuda: average = locals()[averageFunc](xres, yres, locals()[name], tpb)
             else: average = locals()[averageFunc](xres, yres, locals()[name]) # calcular promedio
             averageTime = time.time() - averageTime
-            error = "-" if original == name else LA.norm(locals()[name] - locals()[original]) # calcular error
+            try: error = "-" if original == name else LA.norm(locals()[name] - locals()[original]) # calcular error
+            except: error = "NaN"
 
             if cuda: tpbStr = "-" if "Py" in function else tpb
 
