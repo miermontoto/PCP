@@ -88,6 +88,28 @@ void mandel_normal(double xmin, double ymin, double xmax, double ymax, int maxit
       }
 }
 
+void mandel_tasks(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+      double dx = (xmax - xmin) / xres;
+      double dy = (ymax - ymin) / yres;
+
+      double c_r, c_im;
+
+      int i, j, k;
+      #pragma omp parallel
+            #pragma omp single
+            for (i = 0; i < xres; i++) {
+                  c_r = xmin + i * dx;
+                  for (j = 0; j < yres; j++) {
+                        #pragma omp task firstprivate(i, j, c_r, c_im) private(k) shared(A)
+                        {
+                              c_im = ymin + j * dy;
+                              k = mandel_iter(c_r, c_im, maxiter);
+                              A[i + j * xres] = k;
+                        }
+                  }
+            }
+}
+
 void mandel_schedule_runtime(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
       double dx = (xmax - xmin) / xres;
@@ -254,7 +276,7 @@ double promedio_vect(int xres, int yres, double* A) {
       int hilos, i, size = xres * yres;
 
       #pragma omp parallel
-      #pragma omp master
+            #pragma omp master
             hilos = omp_get_num_threads();
 
       vect = (double*) malloc(hilos * sizeof(double));
@@ -291,8 +313,20 @@ double promedio_int(int xres, int yres, double* A) {
       return sum / (double) size;
 }
 
-// --- BINARIZADOS --- //
+// Versión promedio con schedule estático para tratar de evitar false sharing.
+// El valor de chunk_size óptimo es 8, que es el tamaño de caché de nivel 1.
+double promedio_schedule(int xres, int yres, double* A) {
+      double sum = 0.0;
+      int i, size = xres * yres;
 
+      #pragma omp parallel for reduction(+:sum) schedule(static, 8)
+      for (i = 0; i < size; i++) {
+            sum += A[i];
+      }
+      return sum / size;
+}
+
+// --- BINARIZADOS --- //
 void binariza(int xres, int yres, double* A, double med) {
 
       int i, j;

@@ -32,22 +32,20 @@ validFunctions = {
     'omp': {
         'mandel': {
             'normal': 'mandel_normal',
+            'tasks': 'mandel_tasks',
             'schedule_auto': 'mandel_schedule_auto',
             'schedule_static': 'mandel_schedule_static',
             'schedule_guided': 'mandel_schedule_guided',
             'schedule_runtime': 'mandel_schedule_runtime',
-            'schedule_dynamic': 'mandel_schedule_dynamic',
-            'schedule_dynamic1': 'mandel_schedule_dynamic1',
-            'schedule_dynamic32': 'mandel_schedule_dynamic32',
-            'schedule_dynamic256': 'mandel_schedule_dynamic256',
-            'schedule_dynamic1024': 'mandel_schedule_dynamic1024',
+            'schedule_dynamic': 'mandel_schedule_dynamic'
         },
         'promedio': {
             'normal': 'promedio_normal',
             'atomic': 'promedio_atomic',
             'critical': 'promedio_critical',
             'vect': 'promedio_vect',
-            'int': 'promedio_int'
+            'int': 'promedio_int',
+            'schedule': 'promedio_schedule'
         }
     },
     'cuda': {

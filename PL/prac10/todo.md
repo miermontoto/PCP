@@ -38,7 +38,7 @@
     Debería ser el más rápido: elimina el overhead de atomic y critical.
 - [x] Reduction (int)
     La mitad de rápido que el reduction normal debido a los casteos.
-- [ ] Reduction + schedule(static)
+- [x] Reduction + schedule(static)
     Debería ser más rápido que el reduction normal al tratar de evitar False Sharing.
 
 ### binarizado
@@ -50,7 +50,7 @@
     - [x] Llamadas a CUDA
     - [x] Combinar con launcher original (prac4)
     - [x] Ejecución de múltiples funciones por librería alumnx.
-    - [ ] Arreglar launcher de promedios
+    - [x] Combinar launcher de promedios en el Launcher.
 - [ ] Código CUDA
 - [x] Makefiles
 
