@@ -3,24 +3,24 @@
 #include <xmmintrin.h>
 
 // --- ALGORITMOS DE TIEMPO DE ESCAPE ---
-int mandel_iter_while(double x, double y, int maxiter) {
+int mandel_iter(double x, double y, int maxiter) {
 
       double u = 0.0, v = 0.0;
       double u2 = 0.0, v2 = 0.0;
 
       int k = 1;
       while (k < maxiter && u2 + v2 < 4.0) {
-         v = 2.0 * u * v + y;
-         u = u2 - v2 + x;
-         u2 = u * u;
-         v2 = v * v;
-         k++;
+            v = 2.0 * u * v + y;
+            u = u2 - v2 + x;
+            u2 = u * u;
+            v2 = v * v;
+            k++;
       }
 
       return k == maxiter ? 0 : k;
 }
 
-int mandel_iter(double x, double y, int maxiter) {
+int mandel_iter_for(double x, double y, int maxiter) {
 
       double u = 0.0, v = 0.0;
       double u2 = 0.0, v2 = 0.0;
@@ -126,25 +126,6 @@ void mandel_schedule_dynamic(double xmin, double ymin, double xmax, double ymax,
       }
 }
 
-void mandel_schedule_dynamic1(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
-
-      double dx = (xmax - xmin) / xres;
-      double dy = (ymax - ymin) / yres;
-
-      double c_r, c_im;
-
-      int i, j, k;
-      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(dynamic, 1)
-      for (i = 0; i < xres; i++) {
-            c_r = xmin + i * dx;
-            for (j = 0; j < yres; j++) {
-                  c_im = ymin + j * dy;
-                  k = mandel_iter(c_r, c_im, maxiter);
-                  A[i + j * xres] = k;
-            }
-      }
-}
-
 void mandel_schedule_static(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
       double dx = (xmax - xmin) / xres;
@@ -173,63 +154,6 @@ void mandel_schedule_guided(double xmin, double ymin, double xmax, double ymax, 
 
       int i, j, k;
       #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(guided)
-      for (i = 0; i < xres; i++) {
-            c_r = xmin + i * dx;
-            for (j = 0; j < yres; j++) {
-                  c_im = ymin + j * dy;
-                  k = mandel_iter(c_r, c_im, maxiter);
-                  A[i + j * xres] = k;
-            }
-      }
-}
-
-void mandel_schedule_dynamic32(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
-
-      double dx = (xmax - xmin) / xres;
-      double dy = (ymax - ymin) / yres;
-
-      double c_r, c_im;
-
-      int i, j, k;
-      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(dynamic, 32)
-      for (i = 0; i < xres; i++) {
-            c_r = xmin + i * dx;
-            for (j = 0; j < yres; j++) {
-                  c_im = ymin + j * dy;
-                  k = mandel_iter(c_r, c_im, maxiter);
-                  A[i + j * xres] = k;
-            }
-      }
-}
-
-void mandel_schedule_dynamic256(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
-
-      double dx = (xmax - xmin) / xres;
-      double dy = (ymax - ymin) / yres;
-
-      double c_r, c_im;
-
-      int i, j, k;
-      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(dynamic, 256)
-      for (i = 0; i < xres; i++) {
-            c_r = xmin + i * dx;
-            for (j = 0; j < yres; j++) {
-                  c_im = ymin + j * dy;
-                  k = mandel_iter(c_r, c_im, maxiter);
-                  A[i + j * xres] = k;
-            }
-      }
-}
-
-void mandel_schedule_dynamic1024(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
-
-      double dx = (xmax - xmin) / xres;
-      double dy = (ymax - ymin) / yres;
-
-      double c_r, c_im;
-
-      int i, j, k;
-      #pragma omp parallel for private(i, j, k, c_r, c_im) shared(A) schedule(dynamic, 1024)
       for (i = 0; i < xres; i++) {
             c_r = xmin + i * dx;
             for (j = 0; j < yres; j++) {

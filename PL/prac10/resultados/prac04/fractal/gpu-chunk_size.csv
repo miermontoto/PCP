@@ -1,0 +1,48 @@
+dynamic, 1
+Function;Mode;Size;Time
+mandel_schedule_runtime;PARALELO;256;1.66781E-02
+mandel_schedule_runtime;PARALELO;512;6.96793E-02
+mandel_schedule_runtime;PARALELO;1024;1.96776E-01
+mandel_schedule_runtime;PARALELO;2048;7.50347E-01
+mandel_schedule_runtime;PARALELO;4096;3.00665E+00
+mandel_schedule_runtime;PARALELO;8192;1.20051E+01
+dynamic, 2
+Function;Mode;Size;Time
+mandel_schedule_runtime;PARALELO;256;2.39022E-02
+mandel_schedule_runtime;PARALELO;512;7.49054E-02
+mandel_schedule_runtime;PARALELO;1024;1.97585E-01
+mandel_schedule_runtime;PARALELO;2048;7.55717E-01
+mandel_schedule_runtime;PARALELO;4096;3.02199E+00
+mandel_schedule_runtime;PARALELO;8192;1.20180E+01
+dynamic, 4
+Function;Mode;Size;Time
+mandel_schedule_runtime;PARALELO;256;1.67146E-02
+mandel_schedule_runtime;PARALELO;512;6.34649E-02
+mandel_schedule_runtime;PARALELO;1024;1.96874E-01
+mandel_schedule_runtime;PARALELO;2048;7.55822E-01
+mandel_schedule_runtime;PARALELO;4096;2.99437E+00
+mandel_schedule_runtime;PARALELO;8192;1.20846E+01
+dynamic, 8
+Function;Mode;Size;Time
+mandel_schedule_runtime;PARALELO;256;2.17235E-02
+mandel_schedule_runtime;PARALELO;512;7.56276E-02
+mandel_schedule_runtime;PARALELO;1024;2.01945E-01
+mandel_schedule_runtime;PARALELO;2048;7.45655E-01
+mandel_schedule_runtime;PARALELO;4096;2.97844E+00
+mandel_schedule_runtime;PARALELO;8192;1.20714E+01
+dynamic, 16
+Function;Mode;Size;Time
+mandel_schedule_runtime;PARALELO;256;2.43711E-02
+mandel_schedule_runtime;PARALELO;512;8.36282E-02
+mandel_schedule_runtime;PARALELO;1024;2.00732E-01
+mandel_schedule_runtime;PARALELO;2048;7.45834E-01
+mandel_schedule_runtime;PARALELO;4096;2.98683E+00
+mandel_schedule_runtime;PARALELO;8192;1.21952E+01
+dynamic, 32
+Function;Mode;Size;Time
+mandel_schedule_runtime;PARALELO;256;3.14572E-02
+mandel_schedule_runtime;PARALELO;512;9.28321E-02
+mandel_schedule_runtime;PARALELO;1024;2.11135E-01
+mandel_schedule_runtime;PARALELO;2048;7.44512E-01
+mandel_schedule_runtime;PARALELO;4096;3.02290E+00
+mandel_schedule_runtime;PARALELO;8192;1.22979E+01

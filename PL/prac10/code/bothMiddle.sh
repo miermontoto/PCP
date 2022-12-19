@@ -8,6 +8,6 @@ python Launcher.py $params
 
 # Paralelo
 unset OMP_NUM_THREADS
-python Launcher.py $params noheader -py prof methods normal schedule_guided
+python Launcher.py $params noheader -py prof methods normal schedule_runtime
 
 

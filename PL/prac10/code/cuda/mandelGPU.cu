@@ -232,7 +232,7 @@ extern "C" double promedioGPU_shared(int xres, int yres, double* A, int ThpBlk) 
 	double* d_A;
 	double h_sum, *d_sum, *b_sum;
 
-	int dimGrid = ((xres * yres + ThpBlk - 1) / ThpBlk);
+	int dimGrid = (xres * yres + ThpBlk - 1) / ThpBlk;
 
 	CUDAERR(cudaMalloc((void**) &d_A, size));
 	CUDAERR(cudaMalloc((void**) &d_sum, sizeof(double)));

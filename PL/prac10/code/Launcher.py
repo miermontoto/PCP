@@ -11,6 +11,7 @@ debug = "debug" in sys.argv
 binarizar = "bin" in sys.argv
 diffs = "diffs" in sys.argv
 times = "times" in sys.argv
+onlytimes = "onlytimes" in sys.argv
 
 if "tpb" in sys.argv: # Detección de modo CUDA
     try: tpb = int(sys.argv[sys.argv.index("tpb") + 1])
@@ -85,35 +86,47 @@ sizes = []
 for key in list(validCalls.keys()):
     if key in sys.argv:
         if key == 'own':
-            targetAverage = next(iter(validFunctions[translated]['promedio'].values()))
-            if "average" in sys.argv and sys.argv[sys.argv.index("average") + 1] in validFunctions[translated]['promedio']:
-                targetAverage = validFunctions[translated]['promedio'][sys.argv[sys.argv.index("average") + 1]]
+            averages = [next(iter(validFunctions[translated]['promedio'].values()))]
+
+            if "averages" in sys.argv:
+                if "all" == sys.argv[sys.argv.index("averages") + 1]:
+                    averages = list(validFunctions[translated]['promedio'].values())
+                else:
+                    averages = []
+                    for i in range(sys.argv.index("averages") + 1, len(sys.argv)):
+                        if sys.argv[i] in validFunctions[translated]['promedio']:
+                            averages.append(validFunctions[translated]['promedio'][sys.argv[i]])
+                        else: break
 
             if "methods" in sys.argv:
                 if "all" == sys.argv[sys.argv.index("methods") + 1]:
                     for key, value in validFunctions[translated]['mandel'].items():
-                        calls.append({
-                            'function': value,
-                            'name': f'fractalAlumnx{key.capitalize()}',
-                            'average': targetAverage,
-                            'binary': 'binarizaAlumnx'
-                        })
+                        for average in averages:
+                            calls.append({
+                                'function': value,
+                                'name': f'fractalAlumnx{key.capitalize()}',
+                                'average': average,
+                                'binary': 'binarizaAlumnx'
+                            })
                 else:
                     for i in range(sys.argv.index("methods") + 1, len(sys.argv)):
                         if sys.argv[i] in validFunctions[translated]['mandel']:
-                            calls.append({
-                                'function': validFunctions[translated]['mandel'][sys.argv[i]],
-                                'name': f'fractalAlumnx{sys.argv[i].capitalize()}',
-                                'average': targetAverage,
-                                'binary': 'binarizaAlumnx'
-                            })
+                            for average in averages:
+                                calls.append({
+                                    'function': validFunctions[translated]['mandel'][sys.argv[i]],
+                                    'name': f'fractalAlumnx{sys.argv[i].capitalize()}',
+                                    'average': average,
+                                    'binary': 'binarizaAlumnx'
+                                })
                         else: break
-            else: calls.append({
-                'function': next(iter(validFunctions[translated]['mandel'].values())),
-                'name': 'fractalAlumnx',
-                'average': targetAverage,
-                'binary': 'binarizaAlumnx'
-            })
+            else:
+                for average in averages:
+                    calls.append({
+                        'function': next(iter(validFunctions[translated]['mandel'].values())),
+                        'name': 'fractalAlumnx',
+                        'average': average,
+                        'binary': 'binarizaAlumnx'
+                    })
         else: calls.append(validCalls.get(key))
     elif f"-{key}" in sys.argv and validCalls.get(key) in calls:
         calls.remove(validCalls.get(key))
@@ -169,7 +182,17 @@ if __name__ == "__main__":
     maxiter = int(sys.argv[4])
     ymax = xmax - xmin + ymin
 
-    if not "noheader" in sys.argv: print(f"Function;Mode;Size;{'TPB;' if cuda else ''}Time;Error;Average{';Average Time' if times else ''}{';Bin (err)' if binarizar else ''}{';Bin Time' if binarizar and times else ''}")
+    if not "noheader" in sys.argv:
+        base = "Function;Mode;Size;Time"
+        if cuda: base += ";TPB"
+        if not onlytimes:
+            base += ";Error;Average Function;Average"
+            if times: base += ";Average Time"
+            if binarizar:
+                base += ";Binary (err)"
+                if times:
+                    base += ";Binary Time"
+        print(base)
 
     for size in sizes:
         yres = size
@@ -208,7 +231,12 @@ if __name__ == "__main__":
             if cuda: tpbStr = "-" if "Py" in function else tpb
 
             # imprimir resultados
-            print(f"{function};{mode};{size};{f'{tpbStr};' if cuda else ''}{calcTime:1.5E};{error};{average};{f'{averageTime:1.5E}' if times else ''}", end="" if binarizar else "\n")
+            results = f"{function};{mode};{size};{calcTime:1.5E}"
+            if cuda: results += f";{tpbStr}"
+            if not onlytimes:
+                results += f";{error};{averageFunc};{average}"
+                if times: results += f";{averageTime:1.5E}"
+            print(results, end="" if binarizar else "\n")
 
             # guardar imágenes
             if debug:
@@ -216,7 +244,7 @@ if __name__ == "__main__":
                 if diffs and i > 0: grabar(diffImage(locals()[name], locals()[original]), xres, yres, f"diff_{name}_{size}.bmp")
 
             # binarizar
-            if binarizar:
+            if binarizar and not onlytimes:
                 binName = f"bin_{name}"
                 binOriginal = f"bin_{original}"
                 locals()[binName] = np.copy(locals()[name]) # copiar imagen para evitar sobreescribirla
