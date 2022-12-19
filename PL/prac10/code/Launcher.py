@@ -41,11 +41,11 @@ validFunctions = {
         },
         'promedio': {
             'normal': 'promedio_normal',
+            'int': 'promedio_int',
+            'schedule': 'promedio_schedule',
             'atomic': 'promedio_atomic',
             'critical': 'promedio_critical',
-            'vect': 'promedio_vect',
-            'int': 'promedio_int',
-            'schedule': 'promedio_schedule'
+            'vect': 'promedio_vect'
         }
     },
     'cuda': {
