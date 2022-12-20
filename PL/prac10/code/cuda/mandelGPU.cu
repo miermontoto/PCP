@@ -214,25 +214,26 @@ extern "C" void mandelGPU_normal(double xmin, double ymin, double xmax, double y
 	cudaFree(d_A);
 }
 
-extern "C" int mandel_iter(double x, double y, int maxiter) {
+int mandel(double x, double y, int maxiter) {
 
-      double u = 0.0, v = 0.0;
-      double u2 = 0.0, v2 = 0.0;
+	double u = 0.0, v = 0.0;
+	double u2 = 0.0, v2 = 0.0;
 
-      int k = 1;
-      while (k < maxiter && u2 + v2 < 4.0) {
-         v = 2.0 * u * v + y;
-         u = u2 - v2 + x;
-         u2 = u * u;
-         v2 = v * v;
-         k++;
-      }
+	int k = 1;
+	while (k < maxiter && u2 + v2 < 4.0) {
+		v = 2.0 * u * v + y;
+		u = u2 - v2 + x;
+		u2 = u * u;
+		v2 = v * v;
+		k++;
+	}
 
-      return k == maxiter ? 0 : k;
+	return k == maxiter ? 0 : k;
 }
 
-// Función similar a mandelGPU, pero la CPU realiza el 10% del cálculo y el 90% lo realiza la GPU.
+// Función similar a mandelGPU, pero la CPU realiza parte del cálculo de manera simultánea.
 extern "C" void mandelGPU_heter(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A, int ThpBlk) {
+	float percentage = 0.9;
 	int size = xres * yres * sizeof(double);
 	double dx = (xmax - xmin) / xres;
     double dy = (ymax - ymin) / yres;
@@ -241,22 +242,13 @@ extern "C" void mandelGPU_heter(double xmin, double ymin, double xmax, double ym
 	CUDAERR(cudaMallocManaged((void**) &d_A, size));
 
 	dim3 dimBlock(ThpBlk, ThpBlk);
-    dim3 dimGrid((xres + dimBlock.x - 1) / dimBlock.x, (yres + dimBlock.y - 1) / dimBlock.y);
+    dim3 dimGrid((xres + dimBlock.x - 1) / dimBlock.x, (yres * percentage + dimBlock.y - 1) / dimBlock.y);
 
-	int numBlocksy = std::min(int(dimGrid.y * 0.9), int(dimGrid.y));
-	dim3 dimGridGPU(dimGrid.x, numBlocksy);
-
-	kernelMandel<<<dimGridGPU, dimBlock>>>(xmin, ymin, xmax, ymax, maxiter, xres, yres, d_A);
+	kernelMandel<<<dimGrid, dimBlock>>>(xmin, ymin, xmax, ymax, maxiter, xres, yres, d_A);
 	CHECKLASTERR();
 
-	double c_r, c_im;
-
-	for(int i = 0.9 * xres; i < xres; i++) {
-		c_r = xmin + i * dx;
-		for(int j = 0; j < yres; j++) {
-			c_im = ymin + j * dy;
-			d_A[j + xres * i] = mandel_iter(c_r, c_im, maxiter);
-		}
+	for(int i = percentage * xres * yres; i < xres * yres; i++) {
+		d_A[i] = mandel(xmin + (i % xres) * dx, ymin + (i / xres) * dy, maxiter);
 	}
 
 	CUDAERR(cudaMemcpy(A, d_A, size, cudaMemcpyDeviceToHost));
