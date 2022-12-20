@@ -1,0 +1,16 @@
+Function;Mode;Size;Time;TPB
+mandelGPU_normal;GPU;1024;4.67229E-02;32
+mandelGPU_pinned;GPU;1024;4.92158E-02;32
+mandelGPU_unified;GPU;1024;4.84953E-02;32
+mandelGPU_normal;GPU;2048;1.69969E-01;32
+mandelGPU_pinned;GPU;2048;1.80075E-01;32
+mandelGPU_unified;GPU;2048;1.74971E-01;32
+mandelGPU_normal;GPU;4096;6.30035E-01;32
+mandelGPU_pinned;GPU;4096;6.67895E-01;32
+mandelGPU_unified;GPU;4096;6.54794E-01;32
+mandelGPU_normal;GPU;8192;2.36407E+00;32
+mandelGPU_pinned;GPU;8192;2.53002E+00;32
+mandelGPU_unified;GPU;8192;2.47491E+00;32
+mandelGPU_normal;GPU;10240;3.64805E+00;32
+mandelGPU_pinned;GPU;10240;3.88061E+00;32
+mandelGPU_unified;GPU;10240;3.79581E+00;32

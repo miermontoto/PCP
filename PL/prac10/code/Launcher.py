@@ -53,11 +53,14 @@ validFunctions = {
             'normal': 'mandelGPU_normal',
             'heter': 'mandelGPU_heter',
             'unified': 'mandelGPU_unified',
-            'pinned': 'mandelGPU_pinned'
+            'pinned': 'mandelGPU_pinned',
+            '1D': 'mandelGPU_1D'
         },
         'promedio': {
             'api': 'promedioGPU_api',
-            'shared': 'promedioGPU_shared'
+            'shared': 'promedioGPU_shared',
+            'param': 'promedioGPU_param',
+            'atomic': 'promedioGPU_atomic',
         }
     }
 }
@@ -191,6 +194,14 @@ if __name__ == "__main__":
                 if times:
                     base += ";Binary Time"
         print(base)
+
+    if cuda: # heat up cache
+        for i in range(0, 3):
+            size = next(iter(sizes))
+            for call in calls:
+                locals()[call['name']] = np.zeros(size*size).astype(np.double)
+                locals()[call['function']](xmin, ymin, xmax, ymax, maxiter, size, size, locals()[call['name']], tpb)
+                locals()[call['average']](size, size, locals()[call['name']], tpb)
 
     for size in sizes:
         yres = size

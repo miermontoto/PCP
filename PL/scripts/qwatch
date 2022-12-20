@@ -1,2 +1,2 @@
 #!/bin/bash
-watch -d -n 1 "qstat -u '*'"
+watch -d -n 2 "qstat -u '*'"

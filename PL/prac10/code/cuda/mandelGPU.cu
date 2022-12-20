@@ -1,25 +1,26 @@
 #include "PrototiposGPU.h"
+#include <cmath>
+#include <algorithm>
 
-__global__ void kernelMandel(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A)
-{
-	double dx = (xmax - xmin) / xres;
-	double dy = (ymax - ymin) / yres;
+__global__ void kernelMandel(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
-	double x, y, u, v, u2, v2;
-	int k;
 
+	if (i >= xres || j >= yres) return;
 
-	x = xmin + i * dx;
-	y = ymin + j * dy;
+	double dx = (xmax - xmin) / xres;
+	double dy = (ymax - ymin) / yres;
 
-	u = 0.0;
-	v = 0.0;
-	u2 = u * u;
-	v2 = v * v;
-	k = 1;
+	double x = xmin + i * dx;
+	double y = ymin + j * dy;
 
+	double u = 0.0;
+	double v = 0.0;
+	double u2 = u * u;
+	double v2 = v * v;
+
+	int k = 1;
 	while (u2 + v2 < 4.0 && k < maxiter) {
 		v = 2.0 * u * v + y;
 		u = u2 - v2 + x;
@@ -29,9 +30,38 @@ __global__ void kernelMandel(double xmin, double ymin, double xmax, double ymax,
 	}
 
 	A[i + j * xres] = k >= maxiter ? 0 : k;
-
 }
 
+__global__ void kernelMandel_1D(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
+
+	int tid = blockIdx.x * blockDim.x + threadIdx.x;
+	if (tid >= xres) return;
+
+	double dx = (xmax - xmin) / xres;
+	double dy = (ymax - ymin) / yres;
+
+	int j;
+	for(j = 0; j < yres; j++) {
+		double x = xmin + tid * dx;
+		double y = ymin + j * dy;
+
+		double u = 0.0;
+		double v = 0.0;
+		double u2 = u * u;
+		double v2 = v * v;
+
+		int k = 1;
+		while (u2 + v2 < 4.0 && k < maxiter) {
+			v = 2.0 * u * v + y;
+			u = u2 - v2 + x;
+			u2 = u * u;
+			v2 = v * v;
+			k++;
+		}
+
+		A[tid + j * xres] = k >= maxiter ? 0 : k;
+	}
+}
 
 __global__ void kernelBinariza(int xres, int yres, double* A, double med) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -101,7 +131,72 @@ __global__ void kernelPromedio_getBlocksValue(int xres, int yres, double* A, dou
 	}
 }
 
+__global__ void kernelPromedio_getBlocksValue_ns(int xres, int yres, double* A, double* b_sum, double* cache) {
+	int cacheIndex = threadIdx.x;
+	int source = blockIdx.x * blockDim.x;
+	int tid = cacheIndex + source;
+
+	// Cada hilo calcula su suma.
+	double temp = 0;
+	while (tid < xres * yres) {
+		temp += A[tid];
+		tid += blockDim.x * gridDim.x;
+	}
+	cache[source + cacheIndex] = temp;
+
+	__syncthreads();
+
+	// Se reduce y se obtiene la suma de cada bloque.
+	int i = blockDim.x / 2;
+	while (i != 0) {
+		if (cacheIndex < i) {
+			cache[source + cacheIndex] += cache[source + cacheIndex + i];
+		}
+		__syncthreads();
+		i /= 2;
+	}
+
+	if (cacheIndex == 0) { // Un solo hilo:
+		b_sum[blockIdx.x] = cache[source]; // almacena la suma total de cada bloque.
+	}
+}
+
+__global__ void kernelPromedio_atomic(int xres, int yres, double* A, unsigned long long int* sum) {
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+
+	if(tid < xres * yres) {
+		atomicAdd(sum, (int) A[tid]);
+	}
+}
+
+__global__ void kernelPromedio_sumBlocksValue_ns(double* b_sum, double* sum, int numBlocks, double* cache) {
+	int blocksPerThread = numBlocks / blockDim.x;
+	int tid = threadIdx.x;
+
+	double temp = 0;
+	for (int i = 0; i < blocksPerThread; i++) {
+		temp += b_sum[blocksPerThread * tid + i];
+	}
+
+	cache[tid] = temp;
+	__syncthreads();
+
+	int i = blockDim.x / 2;
+	while (i != 0) {
+		if (tid < i) {
+			cache[tid] += cache[tid + i];
+		}
+		__syncthreads();
+		i /= 2;
+	}
+
+	if (tid == 0) {
+		*sum = *cache;
+	}
+}
+
 // --- Funciones en C --- //
+
 // Función estandar de mandel. Utiliza memoria convencional y funciona en 2D.
 extern "C" void mandelGPU_normal(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A, int ThpBlk) {
 	int size = xres * yres * sizeof(double);
@@ -139,22 +234,43 @@ extern "C" int mandel_iter(double x, double y, int maxiter) {
 // Función similar a mandelGPU, pero la CPU realiza el 10% del cálculo y el 90% lo realiza la GPU.
 extern "C" void mandelGPU_heter(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A, int ThpBlk) {
 	int size = xres * yres * sizeof(double);
+	double dx = (xmax - xmin) / xres;
+    double dy = (ymax - ymin) / yres;
 	double* d_A;
 
 	CUDAERR(cudaMallocManaged((void**) &d_A, size));
 
 	dim3 dimBlock(ThpBlk, ThpBlk);
-	dim3 dimGrid((xres * 0.9 + dimBlock.x - 1) / dimBlock.x, (yres + dimBlock.y - 1) / dimBlock.y);
+    dim3 dimGrid((xres + dimBlock.x - 1) / dimBlock.x, (yres + dimBlock.y - 1) / dimBlock.y);
 
-	kernelMandel<<<dimGrid, dimBlock>>>(xmin, ymin, xmax, ymax, maxiter, xres * 0.9, yres, d_A);
+	int numBlocksy = std::min(int(dimGrid.y * 0.9), int(dimGrid.y));
+	dim3 dimGridGPU(dimGrid.x, numBlocksy);
 
-	// Se realiza el 10% restante de cálculo en la CPU.
-	for (int i = xres * 0.9; i < xres; i++) {
-		for (int j = 0; j < yres; j++) {
-			d_A[i * yres + j] = mandel_iter(xmin + (xmax - xmin) * i / xres, ymin + (ymax - ymin) * j / yres, maxiter);
+	kernelMandel<<<dimGridGPU, dimBlock>>>(xmin, ymin, xmax, ymax, maxiter, xres, yres, d_A);
+	CHECKLASTERR();
+
+	double c_r, c_im;
+
+	for(int i = 0.9 * xres; i < xres; i++) {
+		c_r = xmin + i * dx;
+		for(int j = 0; j < yres; j++) {
+			c_im = ymin + j * dy;
+			d_A[j + xres * i] = mandel_iter(c_r, c_im, maxiter);
 		}
 	}
 
+	CUDAERR(cudaMemcpy(A, d_A, size, cudaMemcpyDeviceToHost));
+	cudaFree(d_A);
+}
+
+extern "C" void mandelGPU_1D(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A, int ThpBlk) {
+	int size = xres * yres * sizeof(double);
+	double* d_A;
+
+	CUDAERR(cudaMalloc((void**) &d_A, size));
+	int numBlocks = (xres * yres + ThpBlk - 1) / ThpBlk;
+
+	kernelMandel_1D<<<numBlocks, ThpBlk>>>(xmin, ymin, xmax, ymax, maxiter, xres, yres, d_A);
 	CHECKLASTERR();
 
 	CUDAERR(cudaMemcpy(A, d_A, size, cudaMemcpyDeviceToHost));
@@ -248,6 +364,52 @@ extern "C" double promedioGPU_shared(int xres, int yres, double* A, int ThpBlk) 
 	cudaFree(d_sum);
 	cudaFree(b_sum);
 	return h_sum / (xres * yres);
+}
+
+extern "C" double promedioGPU_param(int xres, int yres, double* A, int ThpBlk) {
+	int size = xres * yres * sizeof(double);
+	double* d_A, *cache;
+	double h_sum, *d_sum, *b_sum;
+
+	int dimGrid = (xres * yres + ThpBlk - 1) / ThpBlk;
+
+	CUDAERR(cudaMalloc((void**) &d_A, size));
+	CUDAERR(cudaMalloc((void**) &d_sum, sizeof(double)));
+	CUDAERR(cudaMalloc((void**) &b_sum, dimGrid * sizeof(double)));
+	CUDAERR(cudaMalloc((void**) &cache, dimGrid * ThpBlk * sizeof(double)));
+	CUDAERR(cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice));
+
+	kernelPromedio_getBlocksValue_ns<<<dimGrid, ThpBlk>>>(xres, yres, d_A, b_sum, cache);
+	kernelPromedio_sumBlocksValue_ns<<<1, 1024>>>(b_sum, d_sum, dimGrid, cache); // se reutiliza la caché
+	CHECKLASTERR();
+
+	CUDAERR(cudaMemcpy(&h_sum, d_sum, sizeof(double), cudaMemcpyDeviceToHost));
+	cudaFree(d_A);
+	cudaFree(d_sum);
+	cudaFree(cache);
+
+	return h_sum / (xres * yres);
+}
+
+extern "C" double promedioGPU_atomic(int xres, int yres, double* A, int ThpBlk, double* sum) {
+	int size = xres * yres * sizeof(double);
+	double* d_A;
+	unsigned long long int* d_sum, h_sum; // Tiene que ser long long int para evitar overflow en tamaños grandes.
+
+	CUDAERR(cudaMalloc((void**) &d_A, size));
+	CUDAERR(cudaMalloc((void**) &d_sum, sizeof(long long int)));
+	CUDAERR(cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice));
+	CUDAERR(cudaMemset(d_sum, 0, sizeof(long long int)));
+
+	int dimGrid = (xres * yres + ThpBlk - 1) / ThpBlk;
+
+	kernelPromedio_atomic<<<dimGrid, ThpBlk>>>(xres, yres, d_A, d_sum);
+	CHECKLASTERR();
+
+	CUDAERR(cudaMemcpy(&h_sum, d_sum, sizeof(long long int), cudaMemcpyDeviceToHost));
+	cudaFree(d_sum);
+	cudaFree(d_A);
+	return (double) h_sum / (xres * yres);
 }
 
 // -- Binarización

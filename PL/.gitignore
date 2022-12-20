@@ -1,4 +1,5 @@
 *.sh.*
+*.o*
 LIBS
 .vscode
 *.code-workspace

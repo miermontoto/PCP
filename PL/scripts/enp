@@ -50,18 +50,18 @@ fi
 
 
 id=$(echo $msg | cut -d' ' -f3) # Obtener el número del trabajo del mensaje de ejecución.
-echo "enp: $id esperando en cola ${cola[$index]} ($(date +%T))" # Imprimir el nombre de la cola y el número del trabajo.
+echo -e "enp: $id esperando en cola ${cola[$index]}\t($(date +%T))" # Imprimir el nombre de la cola y el número del trabajo.
 
 # Imprimir un mensaje cuando el trabajo entre en la cola.
 # Un trabajo está en la cola si tiene la flag "r" en la columna "state" de "qstat".
 while [ $(qstat | grep $id | cut -d' ' -f7 | grep qw | wc -l) -eq 1 ]; do
     sleep 1
 done
-echo "enp: $id está ejecutando ($(date +%T))"
+echo -e "enp: $id está ejecutando\t\t($(date +%T))"
 while [ $(qstat | grep $id | wc -l) -eq 1 ]; do
     sleep 1
 done
-echo "enp: $id ha terminado ($(date +%T))"
+echo -e "enp: $id ha terminado\t\t\t($(date +%T))"
 
 cat $1.o$id
 rm $1.o$id
