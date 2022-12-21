@@ -234,7 +234,7 @@ int mandel(double x, double y, int maxiter) {
 
 // Función similar a mandelGPU, pero la CPU realiza parte del cálculo de manera simultánea.
 extern "C" void mandelGPU_heter(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A, int ThpBlk) {
-	float percentage = 1;
+	float percentage = 0.7;
 	int basic_size = xres * yres;
 	int size = basic_size * sizeof(double);
 	double dx = (xmax - xmin) / xres;
