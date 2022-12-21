@@ -115,11 +115,12 @@ void mandel_tasks(double xmin, double ymin, double xmax, double ymax, int maxite
 
       int i, j, k;
       #pragma omp parallel
+      {
             #pragma omp single
             for (i = 0; i < xres; i++) {
                   c_r = xmin + i * dx;
                   for (j = 0; j < yres; j++) {
-                        #pragma omp task firstprivate(i, j, c_r, c_im) private(k) shared(A)
+                        #pragma omp task firstprivate(i, j, c_r) private(k, c_im) shared(A)
                         {
                               c_im = ymin + j * dy;
                               k = mandel_iter(c_r, c_im, maxiter);
@@ -127,6 +128,7 @@ void mandel_tasks(double xmin, double ymin, double xmax, double ymax, int maxite
                         }
                   }
             }
+      }
 }
 
 void mandel_schedule_dynamic(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {

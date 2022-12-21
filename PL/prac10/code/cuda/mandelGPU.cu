@@ -74,7 +74,7 @@ __global__ void kernelBinariza(int xres, int yres, double* A, double med) {
 }
 
 // Kernel auxiliar para calcular el promedio.
-// Sirve de barrera de sincronización para que todos los bloques terminen de calcluar su suma.
+// Sirve de barrera de sincronización para que todos los bloques terminen de calcuar su suma.
 __global__ void kernelPromedio_sumBlocksValue(double* b_sum, double* sum, int numBlocks) {
 	extern __shared__ double cache[];
 	int blocksPerThread = numBlocks / blockDim.x;
@@ -389,7 +389,7 @@ extern "C" double promedioGPU_param(int xres, int yres, double* A, int ThpBlk) {
 	return h_sum / basic_size;
 }
 
-extern "C" double promedioGPU_atomic(int xres, int yres, double* A, int ThpBlk, double* sum) {
+extern "C" double promedioGPU_atomic(int xres, int yres, double* A, int ThpBlk) {
 	int basic_size = xres * yres;
 	int size = basic_size * sizeof(double);
 	double* d_A;
