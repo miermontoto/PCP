@@ -1,10 +1,10 @@
 # todo
-- [ ] Código
+- [x] Código
     - [x] prac4
-    - [ ] prac6
-- [ ] Recopilación de resultados y tiempos
-    - [ ] prac4
-    - [ ] prac6
+    - [x] prac6
+- [x] Recopilación de resultados y tiempos
+    - [x] prac4
+    - [x] prac6
 - [ ] Informe
 
 ## prac4
@@ -50,14 +50,14 @@
     - [x] Combinar con launcher original (prac4)
     - [x] Ejecución de múltiples funciones por librería alumnx.
     - [x] Combinar launcher de promedios en el Launcher.
-- [ ] Código CUDA
+- [x] Código CUDA
 - [x] Makefiles
 
 ### mandel
 - [x] Básico
 - [x] Pinned memory
 - [x] Unified memory
-- [ ] Cálculo heterogéneo (con unified)
+- [x] Cálculo heterogéneo (con unified)
 - [x] 1D
 
 ### promedio

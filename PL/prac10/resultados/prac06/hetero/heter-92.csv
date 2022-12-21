@@ -1,0 +1,6 @@
+Function;Mode;Size;Time;TPB
+mandelGPU_heter;GPU;1024;5.63986E-02;32
+mandelGPU_heter;GPU;2048;1.77641E-01;32
+mandelGPU_heter;GPU;4096;5.95594E-01;32
+mandelGPU_heter;GPU;8192;2.23790E+00;32
+mandelGPU_heter;GPU;10240;3.42515E+00;32

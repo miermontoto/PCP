@@ -1,0 +1,21 @@
+Function          Mode  Size   Time         TPB  Error  Average Function    Average             Average Time
+mandelGPU_normal  GPU   1024   4.67043E-02  32   -      promedioGPU_api     221.96313762664795  1.06859E-03
+mandelGPU_normal  GPU   1024   4.67079E-02  32   -      promedioGPU_shared  221.96313762664795  1.02711E-03
+mandelGPU_normal  GPU   1024   4.67019E-02  32   -      promedioGPU_param   221.96313762664795  1.12677E-03
+mandelGPU_normal  GPU   1024   4.67055E-02  32   -      promedioGPU_atomic  221.96313762664795  1.46699E-03
+mandelGPU_normal  GPU   2048   1.69841E-01  32   -      promedioGPU_api     221.9761254787445   3.63636E-03
+mandelGPU_normal  GPU   2048   1.69867E-01  32   -      promedioGPU_shared  221.9761254787445   3.91746E-03
+mandelGPU_normal  GPU   2048   1.69858E-01  32   -      promedioGPU_param   221.9761254787445   3.98397E-03
+mandelGPU_normal  GPU   2048   1.69887E-01  32   -      promedioGPU_atomic  221.9761254787445   5.71108E-03
+mandelGPU_normal  GPU   4096   6.29790E-01  32   -      promedioGPU_api     221.95300847291946  1.36774E-02
+mandelGPU_normal  GPU   4096   6.29830E-01  32   -      promedioGPU_shared  221.95300847291946  1.49238E-02
+mandelGPU_normal  GPU   4096   6.29827E-01  32   -      promedioGPU_param   221.95300847291946  1.51958E-02
+mandelGPU_normal  GPU   4096   6.29904E-01  32   -      promedioGPU_atomic  221.95300847291946  2.22282E-02
+mandelGPU_normal  GPU   8192   2.36097E+00  32   -      promedioGPU_api     221.9368550926447   5.38414E-02
+mandelGPU_normal  GPU   8192   2.36106E+00  32   -      promedioGPU_shared  221.9368550926447   5.86538E-02
+mandelGPU_normal  GPU   8192   2.36106E+00  32   -      promedioGPU_param   221.9368550926447   5.98300E-02
+mandelGPU_normal  GPU   8192   2.36223E+00  32   -      promedioGPU_atomic  221.9368550926447   8.80494E-02
+mandelGPU_normal  GPU   10240  3.64077E+00  32   -      promedioGPU_api     221.9405251789093   8.41403E-02
+mandelGPU_normal  GPU   10240  3.64707E+00  32   -      promedioGPU_shared  221.9405251789093   9.21772E-02
+mandelGPU_normal  GPU   10240  3.64691E+00  32   -      promedioGPU_param   221.9405251789093   9.39844E-02
+mandelGPU_normal  GPU   10240  3.64726E+00  32   -      promedioGPU_atomic  221.9405251789093   1.38058E-01

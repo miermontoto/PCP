@@ -1,6 +1,7 @@
 #include "PrototiposGPU.h"
 #include <cmath>
 #include <algorithm>
+#include <omp.h>
 
 __global__ void kernelMandel(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A) {
 
@@ -233,8 +234,9 @@ int mandel(double x, double y, int maxiter) {
 
 // Función similar a mandelGPU, pero la CPU realiza parte del cálculo de manera simultánea.
 extern "C" void mandelGPU_heter(double xmin, double ymin, double xmax, double ymax, int maxiter, int xres, int yres, double* A, int ThpBlk) {
-	float percentage = 0.9;
-	int size = xres * yres * sizeof(double);
+	float percentage = 1;
+	int basic_size = xres * yres;
+	int size = basic_size * sizeof(double);
 	double dx = (xmax - xmin) / xres;
     double dy = (ymax - ymin) / yres;
 	double* d_A;
@@ -247,7 +249,8 @@ extern "C" void mandelGPU_heter(double xmin, double ymin, double xmax, double ym
 	kernelMandel<<<dimGrid, dimBlock>>>(xmin, ymin, xmax, ymax, maxiter, xres, yres, d_A);
 	CHECKLASTERR();
 
-	for(int i = percentage * xres * yres; i < xres * yres; i++) {
+	#pragma omp parallel for schedule(guided)
+	for(int i = percentage * basic_size; i < basic_size; i++) {
 		d_A[i] = mandel(xmin + (i % xres) * dx, ymin + (i / xres) * dy, maxiter);
 	}
 
