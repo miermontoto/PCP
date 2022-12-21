@@ -1,21 +1,26 @@
-Function          Mode  Size   Time         TPB  Error  Average Function    Average             Average Time
-mandelGPU_normal  GPU   1024   4.67198E-02  32   -      promedioGPU_api     221.96313762664795  1.06907E-03
-mandelGPU_normal  GPU   1024   4.67331E-02  32   -      promedioGPU_shared  221.96313762664795  1.02329E-03
-mandelGPU_normal  GPU   1024   4.67114E-02  32   -      promedioGPU_param   221.96313762664795  1.12724E-03
-mandelGPU_normal  GPU   1024   4.67124E-02  32   -      promedioGPU_atomic  221.96313762664795  1.46651E-03
-mandelGPU_normal  GPU   2048   1.69866E-01  32   -      promedioGPU_api     221.9761254787445   3.59225E-03
-mandelGPU_normal  GPU   2048   1.69910E-01  32   -      promedioGPU_shared  221.9761254787445   3.85141E-03
-mandelGPU_normal  GPU   2048   1.69902E-01  32   -      promedioGPU_param   221.9761254787445   3.91078E-03
-mandelGPU_normal  GPU   2048   1.69899E-01  32   -      promedioGPU_atomic  221.9761254787445   5.64718E-03
-mandelGPU_normal  GPU   4096   6.29977E-01  32   -      promedioGPU_api     221.95300847291946  1.36676E-02
-mandelGPU_normal  GPU   4096   6.29999E-01  32   -      promedioGPU_shared  221.95300847291946  1.48990E-02
-mandelGPU_normal  GPU   4096   6.29975E-01  32   -      promedioGPU_param   221.95300847291946  1.51777E-02
-mandelGPU_normal  GPU   4096   6.30011E-01  32   -      promedioGPU_atomic  221.95300847291946  2.22175E-02
-mandelGPU_normal  GPU   8192   2.36164E+00  32   -      promedioGPU_api     221.9368550926447   5.38452E-02
-mandelGPU_normal  GPU   8192   2.36140E+00  32   -      promedioGPU_shared  221.9368550926447   5.86452E-02
-mandelGPU_normal  GPU   8192   2.36140E+00  32   -      promedioGPU_param   221.9368550926447   5.98710E-02
-mandelGPU_normal  GPU   8192   2.36158E+00  32   -      promedioGPU_atomic  221.9368550926447   8.80325E-02
-mandelGPU_normal  GPU   10240  3.62106E+00  32   -      promedioGPU_api     221.9405251789093   8.40037E-02
-mandelGPU_normal  GPU   10240  3.62069E+00  32   -      promedioGPU_shared  221.9405251789093   9.20177E-02
-mandelGPU_normal  GPU   10240  3.62055E+00  32   -      promedioGPU_param   221.9405251789093   9.37910E-02
-mandelGPU_normal  GPU   10240  3.62178E+00  32   -      promedioGPU_atomic  221.9405251789093   1.37480E-01
+Function;Mode;Size;Time;TPB;Error;Average Function;Average;Average Time
+mandelProf;GPU;1024;4.70762E-02;32;-;mediaProf;221.96313762664795;1.10745E-03
+mandelGPU_normal;GPU;1024;4.70619E-02;32;0.0;promedioGPU_api;221.96313762664795;1.04403E-03
+mandelGPU_normal;GPU;1024;4.71892E-02;32;0.0;promedioGPU_shared;221.96313762664795;1.05500E-03
+mandelGPU_normal;GPU;1024;4.71890E-02;32;0.0;promedioGPU_param;221.96313762664795;1.16730E-03
+mandelGPU_normal;GPU;1024;4.71904E-02;32;0.0;promedioGPU_atomic;221.96313762664795;1.52302E-03
+mandelProf;GPU;2048;1.71252E-01;32;-;mediaProf;221.9761254787445;3.66044E-03
+mandelGPU_normal;GPU;2048;1.71225E-01;32;0.0;promedioGPU_api;221.9761254787445;3.64661E-03
+mandelGPU_normal;GPU;2048;1.71249E-01;32;0.0;promedioGPU_shared;221.9761254787445;3.90553E-03
+mandelGPU_normal;GPU;2048;1.71315E-01;32;0.0;promedioGPU_param;221.9761254787445;3.99327E-03
+mandelGPU_normal;GPU;2048;1.71241E-01;32;0.0;promedioGPU_atomic;221.9761254787445;5.68891E-03
+mandelProf;GPU;4096;6.34568E-01;32;-;mediaProf;221.95300847291946;1.37019E-02
+mandelGPU_normal;GPU;4096;6.34847E-01;32;0.0;promedioGPU_api;221.95300847291946;1.36929E-02
+mandelGPU_normal;GPU;4096;6.34752E-01;32;0.0;promedioGPU_shared;221.95300847291946;1.49641E-02
+mandelGPU_normal;GPU;4096;6.34959E-01;32;0.0;promedioGPU_param;221.95300847291946;1.52528E-02
+mandelGPU_normal;GPU;4096;6.34780E-01;32;0.0;promedioGPU_atomic;221.95300847291946;2.23460E-02
+mandelProf;GPU;8192;2.37857E+00;32;-;mediaProf;221.9368550926447;5.39253E-02
+mandelGPU_normal;GPU;8192;2.37887E+00;32;0.0;promedioGPU_api;221.9368550926447;5.39255E-02
+mandelGPU_normal;GPU;8192;2.37889E+00;32;0.0;promedioGPU_shared;221.9368550926447;5.87978E-02
+mandelGPU_normal;GPU;8192;2.37891E+00;32;0.0;promedioGPU_param;221.9368550926447;5.99570E-02
+mandelGPU_normal;GPU;8192;2.37909E+00;32;0.0;promedioGPU_atomic;221.9368550926447;8.84247E-02
+mandelProf;GPU;10240;3.64771E+00;32;-;mediaProf;221.9405251789093;8.41525E-02
+mandelGPU_normal;GPU;10240;3.64768E+00;32;0.0;promedioGPU_api;221.9405251789093;8.41646E-02
+mandelGPU_normal;GPU;10240;3.64919E+00;32;0.0;promedioGPU_shared;221.9405251789093;9.21803E-02
+mandelGPU_normal;GPU;10240;3.64780E+00;32;0.0;promedioGPU_param;221.9405251789093;9.40485E-02
+mandelGPU_normal;GPU;10240;3.64803E+00;32;0.0;promedioGPU_atomic;221.9405251789093;1.38078E-01

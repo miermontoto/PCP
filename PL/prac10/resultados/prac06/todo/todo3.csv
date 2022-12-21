@@ -1,26 +1,31 @@
-Function           Mode  Size   Time         TPB
-mandelGPU_normal   GPU   1024   4.67293E-02  32
-mandelGPU_heter    GPU   1024   3.56741E-02  32
-mandelGPU_unified  GPU   1024   4.80506E-02  32
-mandelGPU_pinned   GPU   1024   4.93021E-02  32
-mandelGPU_1D       GPU   1024   9.70902E-02  32
-mandelGPU_normal   GPU   2048   1.69983E-01  32
-mandelGPU_heter    GPU   2048   1.34956E-01  32
-mandelGPU_unified  GPU   2048   1.74754E-01  32
-mandelGPU_pinned   GPU   2048   1.80194E-01  32
-mandelGPU_1D       GPU   2048   2.82471E-01  32
-mandelGPU_normal   GPU   4096   6.30054E-01  32
-mandelGPU_heter    GPU   4096   4.81265E-01  32
-mandelGPU_unified  GPU   4096   6.50392E-01  32
-mandelGPU_pinned   GPU   4096   6.68719E-01  32
-mandelGPU_1D       GPU   4096   7.32115E-01  32
-mandelGPU_normal   GPU   8192   2.36160E+00  32
-mandelGPU_heter    GPU   8192   1.80886E+00  32
-mandelGPU_unified  GPU   8192   2.45220E+00  32
-mandelGPU_pinned   GPU   8192   2.51279E+00  32
-mandelGPU_1D       GPU   8192   2.68214E+00  32
-mandelGPU_normal   GPU   10240  3.62056E+00  32
-mandelGPU_heter    GPU   10240  2.75913E+00  32
-mandelGPU_unified  GPU   10240  3.73951E+00  32
-mandelGPU_pinned   GPU   10240  3.85924E+00  32
-mandelGPU_1D       GPU   10240  3.91220E+00  32
+Function;Mode;Size;Time;TPB
+mandelProf;GPU;1024;4.67186E-02;32
+mandelGPU_normal;GPU;1024;4.67300E-02;32
+mandelGPU_heter;GPU;1024;5.31309E-02;32
+mandelGPU_unified;GPU;1024;4.81739E-02;32
+mandelGPU_pinned;GPU;1024;4.93202E-02;32
+mandelGPU_1D;GPU;1024;9.70726E-02;32
+mandelProf;GPU;2048;1.69986E-01;32
+mandelGPU_normal;GPU;2048;1.69900E-01;32
+mandelGPU_heter;GPU;2048;1.74294E-01;32
+mandelGPU_unified;GPU;2048;1.75352E-01;32
+mandelGPU_pinned;GPU;2048;1.80185E-01;32
+mandelGPU_1D;GPU;2048;2.82480E-01;32
+mandelProf;GPU;4096;6.30147E-01;32
+mandelGPU_normal;GPU;4096;6.29878E-01;32
+mandelGPU_heter;GPU;4096;6.38757E-01;32
+mandelGPU_unified;GPU;4096;6.53316E-01;32
+mandelGPU_pinned;GPU;4096;6.68676E-01;32
+mandelGPU_1D;GPU;4096;7.31843E-01;32
+mandelProf;GPU;8192;2.36109E+00;32
+mandelGPU_normal;GPU;8192;2.36119E+00;32
+mandelGPU_heter;GPU;8192;2.37412E+00;32
+mandelGPU_unified;GPU;8192;2.45075E+00;32
+mandelGPU_pinned;GPU;8192;2.51195E+00;32
+mandelGPU_1D;GPU;8192;2.68203E+00;32
+mandelProf;GPU;10240;3.62006E+00;32
+mandelGPU_normal;GPU;10240;3.62469E+00;32
+mandelGPU_heter;GPU;10240;3.64170E+00;32
+mandelGPU_unified;GPU;10240;3.75874E+00;32
+mandelGPU_pinned;GPU;10240;3.85707E+00;32
+mandelGPU_1D;GPU;10240;3.91195E+00;32

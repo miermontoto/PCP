@@ -3,4 +3,4 @@ export LD_PRELOAD="$CUDADIR/lib64/libcudart.so $CUDADIR/lib64/libcublas.so"
 . ./values.sh
 
 unset OMP_NUM_THREADS
-python Launcher.py $xmin $xmax $ymin $maxiter own sizes 1024 2048 4096 8192 10240 methods heter onlytimes tpb 32
+python Launcher.py $xmin $xmax $ymin $maxiter own times sizes 1024 averages all tpb 32  | column -t -s ';'

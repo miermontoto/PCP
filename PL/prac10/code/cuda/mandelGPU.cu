@@ -315,7 +315,8 @@ extern "C" void mandelGPU_unified(double xmin, double ymin, double xmax, double 
 
 // Función que calcula el promedio utilizando la API de cublas.
 extern "C" double promedioGPU_api(int xres, int yres, double* A, int ThpBlk) {
-	int size = xres * yres;
+	int basic_size = xres * yres;
+	int size = basic_size * sizeof(double);
 
 	double sum;
 	double* d_A;
@@ -326,20 +327,21 @@ extern "C" double promedioGPU_api(int xres, int yres, double* A, int ThpBlk) {
 		exit(EXIT_FAILURE);
 	}
 
-	CUDAERR(cudaMalloc((void**) &d_A, size * sizeof(double)));
-	CUDAERR(cudaMemcpy(d_A, A, size * sizeof(double), cudaMemcpyHostToDevice));
-	cublasDasum_v2(handle, size, d_A, 1, &sum);
+	CUDAERR(cudaMalloc((void**) &d_A, size));
+	CUDAERR(cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice));
+	cublasDasum_v2(handle, basic_size, d_A, 1, &sum);
 	CHECKLASTERR();
 
 	cublasDestroy_v2(handle); // Se utiliza "v2" pero en realidad la función original expande a la versión 2 por defecto
 	cudaFree(d_A);
-	return sum / size;
+	return sum / basic_size;
 }
 
 // Función promedio con Shared Memory.
 // Inspirado en el Problema X de las PAs.
 extern "C" double promedioGPU_shared(int xres, int yres, double* A, int ThpBlk) {
-	int size = xres * yres * sizeof(double);
+	int basic_size = xres * yres;
+	int size = basic_size * sizeof(double);
 	double* d_A;
 	double h_sum, *d_sum, *b_sum;
 
@@ -358,11 +360,12 @@ extern "C" double promedioGPU_shared(int xres, int yres, double* A, int ThpBlk) 
 	cudaFree(d_A);
 	cudaFree(d_sum);
 	cudaFree(b_sum);
-	return h_sum / (xres * yres);
+	return h_sum / basic_size;
 }
 
 extern "C" double promedioGPU_param(int xres, int yres, double* A, int ThpBlk) {
-	int size = xres * yres * sizeof(double);
+	int basic_size = xres * yres;
+	int size = basic_size * sizeof(double);
 	double* d_A, *cache;
 	double h_sum, *d_sum, *b_sum;
 
@@ -383,11 +386,12 @@ extern "C" double promedioGPU_param(int xres, int yres, double* A, int ThpBlk) {
 	cudaFree(d_sum);
 	cudaFree(cache);
 
-	return h_sum / (xres * yres);
+	return h_sum / basic_size;
 }
 
 extern "C" double promedioGPU_atomic(int xres, int yres, double* A, int ThpBlk, double* sum) {
-	int size = xres * yres * sizeof(double);
+	int basic_size = xres * yres;
+	int size = basic_size * sizeof(double);
 	double* d_A;
 	unsigned long long int* d_sum, h_sum; // Tiene que ser long long int para evitar overflow en tamaños grandes.
 
@@ -404,7 +408,7 @@ extern "C" double promedioGPU_atomic(int xres, int yres, double* A, int ThpBlk, 
 	CUDAERR(cudaMemcpy(&h_sum, d_sum, sizeof(long long int), cudaMemcpyDeviceToHost));
 	cudaFree(d_sum);
 	cudaFree(d_A);
-	return (double) h_sum / (xres * yres);
+	return (double) h_sum / basic_size;
 }
 
 // -- Binarización
