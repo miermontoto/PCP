@@ -40,18 +40,19 @@ __global__ void kernelMandel_1D(double xmin, double ymin, double xmax, double ym
 
 	double dx = (xmax - xmin) / xres;
 	double dy = (ymax - ymin) / yres;
+	double u, v, u2, v2, x, y;
 
-	int j;
+	int j, k;
 	for(j = 0; j < yres; j++) {
-		double x = xmin + tid * dx;
-		double y = ymin + j * dy;
+		x = xmin + tid * dx;
+		y = ymin + j * dy;
 
-		double u = 0.0;
-		double v = 0.0;
-		double u2 = u * u;
-		double v2 = v * v;
+		u = 0.0;
+		v = 0.0;
+		u2 = u * u;
+		v2 = v * v;
 
-		int k = 1;
+		k = 1;
 		while (u2 + v2 < 4.0 && k < maxiter) {
 			v = 2.0 * u * v + y;
 			u = u2 - v2 + x;

@@ -1,1 +1,2 @@
+#!/bin/bash
 sh middle.sh | column -t -s ';'
