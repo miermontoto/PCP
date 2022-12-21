@@ -1,6 +1,6 @@
 . ./values.sh
 
-params="${xmin} ${xmax} ${ymin} ${maxiter} onlytimes own py sizes 256 512 1024 2048 4096 8192"
+params="${xmin} ${xmax} ${ymin} ${maxiter} onlytimes py own sizes 256 512 1024 2048 4096 8192"
 
 # Secuencial
 export OMP_NUM_THREADS=1

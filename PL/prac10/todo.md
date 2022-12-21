@@ -5,7 +5,7 @@
 - [x] Recopilación de resultados y tiempos
     - [x] prac4
     - [x] prac6
-- [ ] Informe
+- [x] Informe
 
 ## prac4
 - [x] Código Python
