@@ -1,0 +1,32 @@
+## Resultados
+- **Nota código prac4:** 10
+	- No hace falta privatizar variable de control de bucle `parallel for`. (0)
+	- Extra mandel con tareas (0)
+	- Extra promedios (0)
+	- Shared en parallel es redundante (0)
+	- Promedio DyV (0)
+	- Variables privadas de bucles en vez de región (0)
+	- Extra schedules distintos (0)
+- **Nota código prac6:** 9.9
+	- 1D con bucle interno (0)
+	- Heterogéneo (0)
+	- Unificada (0)
+	- Pinned (0)
+	- Reducción generalista (0)
+	- Reducción con atomic (0)
+	- Cálculos de dx/dy en mal lugar (0)
+	- En 1D, configuración de ejecucción incorrecta (-0.1)
+- **Nota informe prac4:** 10 *(nota real: 12)*
+	- 7x Una estrategia más (+1) = +7
+	- Eficiencia teórica mal (-1)
+	- Tiempo teórico mal (-1)
+	- Discusión con algunas carencias menores (-0.5)
+- **Nota informe prac6:** 10 *(nota real: 11.5)*
+	- Heterogéneo (+1)
+	- Promedio DyV (+1)
+	- 2x Extra gestión de memoria (+0.5) = +1
+	- Extra 1D/2D "sencillo" (+0.5)
+	- Alguna frase cortada (0)
+	- Extra atomic (+0.5)
+
+**NOTA FINAL:** 9.98
