@@ -30,3 +30,16 @@
 	- Extra atomic (+0.5)
 
 **NOTA FINAL:** 9.98
+
+## Revisión
+- prac4
+	- "intento extra mandel"
+	- "extra binariza"
+	- cómo usar varias máquinas?
+- prac6
+	- reducción de un solo bloque
+	- extra 1d/2d "complejo"?
+	- promedio un bloque, DyV un bloque
+	- "extra otras zonas"
+	- promedio híbrido
+	- "extra gpu"
