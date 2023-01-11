@@ -16,6 +16,7 @@
 	- Reducción con atomic (0)
 	- Cálculos de dx/dy en mal lugar (0)
 	- En 1D, configuración de ejecucción incorrecta (-0.1)
+    	- se introducen muchos más hilos de los necesarios de los que se necesitan al calcular xres*yres.
 - **Nota informe prac4:** 10 *(nota real: 12)*
 	- 7x Una estrategia más (+1) = +7
 	- Eficiencia teórica mal (-1)
@@ -34,12 +35,19 @@
 ## Revisión
 - prac4
 	- "intento extra mandel"
+    	- nada. intento significa intento, puntúa menos.
 	- "extra binariza"
+    	- literalmente eso, cuenta muy poco.
 	- cómo usar varias máquinas?
+    	- análisis más profundo de rendimiento y diferencias entre las tres colas.
 - prac6
-	- reducción de un solo bloque
+	- reducción, promedio, DyV de un solo bloque
+    	- versiones con mala configuración o mal planteamiento.
 	- extra 1d/2d "complejo"?
-	- promedio un bloque, DyV un bloque
+    	- un hilo trabaja una vez por píxel, en lugar de eliminar un bucle y trabajar por filas/columnas.
 	- "extra otras zonas"
+    	- probar otras zonas del fractal. análisis según alcance de maxiter.
 	- promedio híbrido
+    	- versión mala del promedio manual, con suma final de bloques por CPU.
 	- "extra gpu"
+    	- Alex. comparación según cuda cores y compute capability, diferencias...
