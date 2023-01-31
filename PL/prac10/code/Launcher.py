@@ -5,7 +5,7 @@ import ctypes
 import numpy as np
 from numpy.ctypeslib import ndpointer
 from numpy import linalg as LA
-from mandel import *
+import mandel
 
 debug = "debug" in sys.argv
 binarizar = "bin" in sys.argv
@@ -13,9 +13,9 @@ diffs = "diffs" in sys.argv
 times = "times" in sys.argv
 onlytimes = "onlytimes" in sys.argv
 
-if "tpb" in sys.argv: # Detección de modo CUDA
+if "tpb" in sys.argv:  # Detección de modo CUDA
     try: tpb = int(sys.argv[sys.argv.index("tpb") + 1])
-    except:
+    except Exception:
         tpb = 32
         print("Error al obtener el número de hilos por bloque, se utiliza valor por defecto (32)")
     mode = "GPU"
@@ -26,7 +26,7 @@ else:
     cuda = False
     translated = 'omp'
 
-os.system(f"make {translated} >/dev/null") # Se ignoran los mensajes pero no los errores
+os.system(f"make {translated} >/dev/null")  # Se ignoran los mensajes pero no los errores
 
 validFunctions = {
     'omp': {
@@ -135,9 +135,9 @@ for key in list(validCalls.keys()):
 if "sizes" in sys.argv:
     for i in range(sys.argv.index("sizes") + 1, len(sys.argv)):
         try: sizes.append(int(sys.argv[i]))
-        except: break
+        except Exception: break
 
-if len(sizes) == 0: sizes.append(4) # marcar error si no se detectan tamaños
+if len(sizes) == 0: sizes.append(4)  # marcar error si no se detectan tamaños
 
 functions = {
     'mandel': {
@@ -183,7 +183,7 @@ if __name__ == "__main__":
     maxiter = int(sys.argv[4])
     ymax = xmax - xmin + ymin
 
-    if not "noheader" in sys.argv:
+    if "noheader" not in sys.argv:
         base = "Function;Mode;Size;Time"
         if cuda: base += ";TPB"
         if not onlytimes:
@@ -195,11 +195,11 @@ if __name__ == "__main__":
                     base += ";Binary Time"
         print(base)
 
-    if cuda: # heat up cache
+    if cuda:  # heat up cache
         for i in range(0, 3):
             size = next(iter(sizes))
             for call in calls:
-                locals()[call['name']] = np.zeros(size*size).astype(np.double)
+                locals()[call['name']] = np.zeros(size * size).astype(np.double)
                 locals()[call['function']](xmin, ymin, xmax, ymax, maxiter, size, size, locals()[call['name']], tpb)
                 locals()[call['average']](size, size, locals()[call['name']], tpb)
 
@@ -214,7 +214,7 @@ if __name__ == "__main__":
             binaryFunc = call['binary']
             original = calls[0]['name']
 
-            checkCuda = cuda and not "Py" in function
+            checkCuda = cuda and "Py" not in function
 
             # Como indicado en clase, tamaños superiores a 2048 suponen un calculo
             # demasiado largo y no son útiles para la práctica.
@@ -222,7 +222,7 @@ if __name__ == "__main__":
             # el tamaño aquí.
             if "Py" in function or "Py" in name and size > 2048: continue
 
-            locals()[name] = np.zeros(yres*xres).astype(np.double) # reservar memoria
+            locals()[name] = np.zeros(yres * xres).astype(np.double)  # reservar memoria
 
             # ejecutar función
             calcTime = time.time()
@@ -233,10 +233,10 @@ if __name__ == "__main__":
             # calcular promedio y error
             averageTime = time.time()
             if checkCuda: average = locals()[averageFunc](xres, yres, locals()[name], tpb)
-            else: average = locals()[averageFunc](xres, yres, locals()[name]) # calcular promedio
+            else: average = locals()[averageFunc](xres, yres, locals()[name])  # calcular promedio
             averageTime = time.time() - averageTime
-            try: error = "-" if original == name else LA.norm(locals()[name] - locals()[original]) # calcular error
-            except: error = "NaN"
+            try: error = "-" if original == name else LA.norm(locals()[name] - locals()[original])  # calcular error
+            except Exception: error = "NaN"
 
             if cuda: tpbStr = "-" if "Py" in function else tpb
 
@@ -250,14 +250,14 @@ if __name__ == "__main__":
 
             # guardar imágenes
             if debug:
-                grabar(locals()[name], xres, yres, f"{name}_{size}.bmp") # guardar archivo
-                if diffs and i > 0: grabar(diffImage(locals()[name], locals()[original]), xres, yres, f"diff_{name}_{size}.bmp")
+                mandel.grabar(locals()[name], xres, yres, f"{name}_{size}.bmp")  # guardar archivo
+                if diffs and i > 0: mandel.grabar(mandel.diffImage(locals()[name], locals()[original]), xres, yres, f"diff_{name}_{size}.bmp")
 
             # binarizar
             if binarizar and not onlytimes:
                 binName = f"bin_{name}"
                 binOriginal = f"bin_{original}"
-                locals()[binName] = np.copy(locals()[name]) # copiar imagen para evitar sobreescribirla
+                locals()[binName] = np.copy(locals()[name])  # copiar imagen para evitar sobreescribirla
 
                 # calcular binarización
                 binarizaTime = time.time()
@@ -270,4 +270,4 @@ if __name__ == "__main__":
                 print(f";{error};{f'{binarizaTime:1.5E}' if times else ''}")
 
                 # guardar binarizado
-                if debug: grabar(locals()[binName], xres, yres, f"{binName}_{size}.bmp")
+                if debug: mandel.grabar(locals()[binName], xres, yres, f"{binName}_{size}.bmp")

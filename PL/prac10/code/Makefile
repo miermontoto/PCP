@@ -23,5 +23,5 @@ mandelGPU.o: cuda/mandelGPU.cu
 	nvcc $(cflags) -c cuda/mandelGPU.cu -o cuda/mandelGPU.o
 
 mandelGPU: mandelGPU.o
-	g++ -shared -Wl,-soname,mandelGPU.so -o cuda/mandelAlumnxGPU.so cuda/mandelGPU.o -L$(CUDADIR)/lib64 $(libs)
+	g++ -shared -Wl,-soname,mandelGPU.so -o cuda/mandelAlumnxGPU.so cuda/mandelGPU.o -L/usr/local/cuda/lib64 $(libs)
 	rm -f cuda/mandelGPU.o
